@@ -1,6 +1,7 @@
-// Copyright (c) 2013, the Dart project authors.  Please see the AUTHORS file
+// Copyright (c) 2015, the Dart project authors.  Please see the AUTHORS file
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
+@initializeTracker
 library static_init.static_init_test;
 
 import 'foo.dart'; // For the annotations.
@@ -17,7 +18,9 @@ main() {
 
   test('annotations are seen in post-order with superclasses first', () {
     // Foo comes first because its a superclass of Bar.
-    var expectedNames = [#Foo, #Bar, #bar, #fooBar, #foo, #zap, #Zap];
+    var expectedNames = [#static_init.test.bar, #static_init.test.foo,
+        #static_init.static_init_test, #Foo, #Bar, #bar, #fooBar, #foo, #zap,
+        #Zap];
     var actualNames = InitializeTracker.seen.map((d) => d.simpleName);
     expect(actualNames, expectedNames);
   });

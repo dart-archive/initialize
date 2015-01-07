@@ -1,8 +1,9 @@
-// Copyright (c) 2013, the Dart project authors.  Please see the AUTHORS file
+// Copyright (c) 2015, the Dart project authors.  Please see the AUTHORS file
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 library static_init;
 
+import 'dart:collection' show ListQueue;
 import 'dart:mirrors';
 
 part 'src/init_method.dart';
@@ -15,9 +16,18 @@ final _root = currentMirrorSystem().isolate.rootLibrary;
 /// annotated, values are the annotations that have been processed.
 final _annotationsFound = new Map<DeclarationMirror, Set<InstanceMirror>>();
 
+/// Queues for pending intialization functions to run.
+final _libraryQueue = new ListQueue<Function>();
+final _otherQueue = new ListQueue<Function>();
+
 /// Top level function which crawls the dependency graph and runs initializers.
 void run() {
+  // Parse everything into the two queues.
   _readLibraryDeclarations(_root);
+
+  // First empty the _libraryQueue, then the _otherQueue.
+  while (_libraryQueue.isNotEmpty) _libraryQueue.removeFirst()();
+  while (_otherQueue.isNotEmpty) _otherQueue.removeFirst()();
 }
 
 /// Reads and executes StaticInitializer annotations on this library and all its
@@ -33,30 +43,35 @@ void _readLibraryDeclarations(
     _readLibraryDeclarations(dependency.targetLibrary, librariesSeen);
   }
 
-  // Then parse all class and method annotations in this library.
-  library
+  // Second parse the library directive annotations.
+  _readAnnotations(library, _libraryQueue);
+
+  // Last, parse all class and method annotations.
+   library
       .declarations
       .values
       .where((d) => d is ClassMirror || d is MethodMirror)
-      .forEach((DeclarationMirror d) => _readAnnotations(d));
+      .forEach((DeclarationMirror d) => _readAnnotations(d, _otherQueue));
 }
 
-void _readAnnotations(DeclarationMirror declaration) {
-  for (var meta in declaration.metadata) {
-    if (meta.reflectee is! StaticInitializer) continue;
-    if (!_annotationsFound.containsKey(declaration)) {
-      _annotationsFound[declaration] = new Set<InstanceMirror>();
-    }
-    if (_annotationsFound[declaration].contains(meta)) continue;
+void _readAnnotations(DeclarationMirror declaration,
+                      ListQueue<Function> queue) {
+  declaration
+      .metadata
+      .where((m) => m.reflectee is StaticInitializer)
+      .forEach((meta) {
+        if (!_annotationsFound.containsKey(declaration)) {
+          _annotationsFound[declaration] = new Set<InstanceMirror>();
+        }
+        if (_annotationsFound[declaration].contains(meta)) return;
+        _annotationsFound[declaration].add(meta);
 
-    _annotationsFound[declaration].add(meta);
+        // Initialize super classes first, this is the only exception to the
+        // post-order rule.
+        if (declaration is ClassMirror && declaration.superclass != null) {
+          _readAnnotations(declaration.superclass, queue);
+        }
 
-    // Initialize super classes first, this is the only exception to the
-    // post-order rule.
-    if (declaration is ClassMirror && declaration.superclass != null) {
-      _readAnnotations(declaration.superclass);
-    }
-
-    meta.reflectee.initialize(declaration);
-  }
+        queue.addLast(() => meta.reflectee.initialize(declaration));
+      });
 }
