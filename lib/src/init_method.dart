@@ -7,21 +7,12 @@ part of static_init;
 /// automatically when calling static_init.run(). This class is private because
 /// it shouldn't be used directly in annotations, instead use the `initMethod`
 /// singleton below.
-class _InitMethod implements StaticInitializer<MethodMirror> {
+typedef dynamic _ZeroArg();
+class _InitMethod implements StaticInitializer<_ZeroArg> {
   const _InitMethod();
 
   @override
-  initialize(MethodMirror method) {
-    if (!method.isStatic) {
-      throw 'Methods marked with @initMethod should be static, '
-            '${method.simpleName} is not.';
-    }
-    if (method.parameters.any((p) => !p.isOptional)) {
-      throw 'Methods marked with @initMethod should take no arguments, '
-            '${method.simpleName} expects some.';
-    }
-    (method.owner as ObjectMirror).invoke(method.simpleName, const []);
-  }
+  initialize(_ZeroArg method) => method();
 }
 
 /// We only ever need one instance of the `_InitMethod` class, this is it.

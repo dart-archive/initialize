@@ -15,13 +15,13 @@ main() {
   test('filter option limits which types of annotations will be ran', () {
     runPhase(1);
     // Even though Baz extends Bar, only Baz should be run.
-    expect(getNames(InitializeTracker.seen), [#Baz]);
+    expect(InitializeTracker.seen, [Baz]);
     runPhase(2);
-    expect(getNames(InitializeTracker.seen), [#Baz, #foo]);
+    expect(InitializeTracker.seen, [Baz, 'foo']);
     runPhase(3);
-    expect(getNames(InitializeTracker.seen), [#Baz, #foo, #Foo]);
+    expect(InitializeTracker.seen, [Baz, 'foo', Foo]);
     runPhase(4);
-    expect(getNames(InitializeTracker.seen), [#Baz, #foo, #Foo, #Bar]);
+    expect(InitializeTracker.seen, [Baz, 'foo', Foo, Bar]);
 
     // Sanity check, future calls should be no-ops
     var originalSize = InitializeTracker.seen.length;
@@ -34,20 +34,16 @@ main() {
   });
 }
 
-Iterable<Symbol> getNames(Iterable<DeclarationMirror> original) =>
-    original.map((d) => d.simpleName);
-
 runPhase(int phase) {
-  run(customFilter: (InstanceMirror meta) =>
-      meta.reflectee is PhasedInitializer &&
-      (meta.reflectee as PhasedInitializer).phase == phase);
+  run(customFilter: (StaticInitializer meta) =>
+      meta is PhasedInitializer && meta.phase == phase);
 }
 
 @PhasedInitializer(3)
 class Foo {}
 
 @PhasedInitializer(2)
-foo() {}
+foo() => 'foo';
 
 @PhasedInitializer(4)
 class Bar {}

@@ -7,12 +7,12 @@ part of static_init;
 ///
 /// Hello world example:
 ///
-///   class Print implements StaticInitializer<ClassMirror> {
+///   class Print implements StaticInitializer<Type> {
 ///     final String message;
 ///     const Print(this.message);
 ///
 ///     @override
-///     initialize(ClassMirror) => print('${t.reflectedType} says `$message`');
+///     initialize(Type t) => print('$t says `$message`');
 ///   }
 ///
 ///   @Print('hello world!')
@@ -23,3 +23,6 @@ part of static_init;
 abstract class StaticInitializer<T> {
   dynamic initialize(T target);
 }
+
+/// Typedef for a custom filter function.
+typedef bool InitializerFilter(StaticInitializer initializer);

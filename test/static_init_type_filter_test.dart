@@ -42,19 +42,19 @@ b() {}
 c() {}
 
 // Static Initializer that increments `total` by one.
-class _Adder implements StaticInitializer<DeclarationMirror> {
+class _Adder implements StaticInitializer<dynamic> {
   const _Adder();
 
   @override
-  initialize(DeclarationMirror t) => total++;
+  initialize(_) => total++;
 }
 const adder = const _Adder();
 
 // Static Initializer that decrements `total` by one.
-class _Subtractor implements StaticInitializer<DeclarationMirror> {
+class _Subtractor implements StaticInitializer<dynamic> {
   const _Subtractor();
 
   @override
-  initialize(DeclarationMirror t) => total--;
+  initialize(_) => total--;
 }
 const subtractor = const _Subtractor();

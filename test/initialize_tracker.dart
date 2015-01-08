@@ -7,13 +7,20 @@ import 'dart:mirrors';
 import 'package:static_init/static_init.dart';
 
 // Static Initializer that just saves everything it sees.
-class InitializeTracker implements StaticInitializer<DeclarationMirror> {
-  static final List<DeclarationMirror> seen = [];
+class InitializeTracker implements StaticInitializer<dynamic> {
+  static final List seen = [];
 
   const InitializeTracker();
 
   @override
-  initialize(DeclarationMirror t) => seen.add(t);
+  void initialize(value) {
+    // invoke functions and add their return value, makes testing easier.
+    if (value is Function) {
+      seen.add((value() as InstanceMirror).reflectee);
+    } else {
+      seen.add(value);
+    }
+  }
 }
 
 const initializeTracker = const InitializeTracker();

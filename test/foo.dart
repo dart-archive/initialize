@@ -4,14 +4,14 @@
 @initializeTracker
 library static_init.test.foo;
 
-import 'bar.dart'; // For the annotations.
+export 'bar.dart';
 import 'initialize_tracker.dart';
 
 @initializeTracker
 class Foo {}
 
 @initializeTracker
-fooBar() {}
+fooBar() => 'fooBar';
 
 @initializeTracker
-foo() {}
+foo() => 'foo';

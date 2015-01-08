@@ -4,7 +4,7 @@
 @initializeTracker
 library static_init.static_init_test;
 
-import 'foo.dart'; // For the annotations.
+import 'foo.dart';
 import 'initialize_tracker.dart';
 import 'package:static_init/static_init.dart';
 import 'package:unittest/unittest.dart';
@@ -19,10 +19,9 @@ main() {
   test('annotations are seen in post-order with superclasses first', () {
     // Foo comes first because its a superclass of Bar.
     var expectedNames = [#static_init.test.bar, #static_init.test.foo,
-        #static_init.static_init_test, #Foo, #Bar, #bar, #fooBar, #foo, #zap,
-        #Zap];
-    var actualNames = InitializeTracker.seen.map((d) => d.simpleName);
-    expect(actualNames, expectedNames);
+        #static_init.static_init_test, Foo, Bar, 'bar', 'fooBar', 'foo', 'zap',
+        Zap];
+    expect(InitializeTracker.seen, expectedNames);
   });
 
   test('annotations only run once', () {
@@ -37,4 +36,4 @@ main() {
 class Zap {}
 
 @initializeTracker
-zap() {}
+zap() => 'zap';
