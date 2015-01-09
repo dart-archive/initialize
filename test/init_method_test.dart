@@ -14,15 +14,18 @@ main() {
   useCompactVMConfiguration();
 
   // Run all static initializers.
-  run();
+  run().then((_) {
 
-  test('initMethod annotation invokes functions once', () {
-    expect(calledFoo, 1);
-    expect(calledBar, 1);
-    // Re-run all static initializers, should be a no-op.
-    run();
-    expect(calledFoo, 1);
-    expect(calledBar, 1);
+    test('initMethod annotation invokes functions once', () {
+      expect(calledFoo, 1);
+      expect(calledBar, 1);
+      // Re-run all static initializers, should be a no-op.
+      return run().then((_) {
+        expect(calledFoo, 1);
+        expect(calledBar, 1);
+      });
+    });
+
   });
 }
 

@@ -14,21 +14,24 @@ main() {
   useCompactVMConfiguration();
 
   // Run all static initializers.
-  run();
+  run().then((_) {
 
-  test('annotations are seen in post-order with superclasses first', () {
-    // Foo comes first because its a superclass of Bar.
-    var expectedNames = [#static_init.test.bar, #static_init.test.foo,
-        #static_init.static_init_test, Foo, Bar, 'bar', 'fooBar', 'foo', 'zap',
-        Zap];
-    expect(InitializeTracker.seen, expectedNames);
-  });
+    test('annotations are seen in post-order with superclasses first', () {
+      // Foo comes first because its a superclass of Bar.
+      var expectedNames = [#static_init.test.bar, #static_init.test.foo,
+          #static_init.static_init_test, Foo, Bar, 'bar', 'fooBar', 'foo',
+          'zap', Zap];
+      expect(InitializeTracker.seen, expectedNames);
+    });
 
-  test('annotations only run once', () {
-    // Run the static initializers again, should be a no-op.
-    var originalSize = InitializeTracker.seen.length;
-    run();
-    expect(InitializeTracker.seen.length, originalSize);
+    test('annotations only run once', () {
+      // Run the static initializers again, should be a no-op.
+      var originalSize = InitializeTracker.seen.length;
+      return run().then((_) {
+        expect(InitializeTracker.seen.length, originalSize);
+      });
+    });
+
   });
 }
 

@@ -3,6 +3,7 @@
 // BSD-style license that can be found in the LICENSE file.
 library static_init.mirror_loader;
 
+import 'dart:async';
 import 'dart:collection' show ListQueue;
 import 'dart:mirrors';
 import 'package:static_init/static_init.dart';
@@ -39,13 +40,19 @@ class StaticInitializationCrawler {
 
   // The primary function in this class, invoke it to crawl and call all the
   // annotations.
-  run() {
+  Future run() {
     // Parse everything into the two queues.
     _readLibraryDeclarations(_root);
 
     // First empty the _libraryQueue, then the _otherQueue.
-    while (_libraryQueue.isNotEmpty) _libraryQueue.removeFirst()();
-    while (_otherQueue.isNotEmpty) _otherQueue.removeFirst()();
+    return _runInitQueue(_libraryQueue).then((_) => _runInitQueue(_otherQueue));
+  }
+
+  Future _runInitQueue(ListQueue<Function> queue) {
+    if (queue.isEmpty) return new Future.value(null);
+    var val = queue.removeFirst()();
+    return (val is Future ? val : new Future.value(null))
+        .then((_) => _runInitQueue(queue));
   }
 
   /// Reads and executes StaticInitializer annotations on this library and all
@@ -95,19 +102,21 @@ class StaticInitializationCrawler {
             _readAnnotations(declaration.superclass, queue);
           }
 
-          queue.addLast(() {
-            var annotatedValue;
-            if (declaration is ClassMirror) {
-              annotatedValue = declaration.reflectedType;
-            } else if (declaration is MethodMirror) {
-              annotatedValue =
-                  () => (declaration.owner as ObjectMirror)
-                            .invoke(declaration.simpleName, const []);
-            } else {
-              annotatedValue = declaration.qualifiedName;
+          var annotatedValue;
+          if (declaration is ClassMirror) {
+            annotatedValue = declaration.reflectedType;
+          } else if (declaration is MethodMirror) {
+            if (!declaration.isStatic) {
+              throw new UnsupportedError(
+                  'Only static methods are supported for StaticInitializers');
             }
-            meta.reflectee.initialize(annotatedValue);
-          });
+            annotatedValue =
+                () => (declaration.owner as ObjectMirror)
+                          .invoke(declaration.simpleName, const []);
+          } else {
+            annotatedValue = declaration.qualifiedName;
+          }
+          queue.addLast(() => meta.reflectee.initialize(annotatedValue));
         });
   }
 }

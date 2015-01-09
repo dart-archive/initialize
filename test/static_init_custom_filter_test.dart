@@ -3,7 +3,7 @@
 // BSD-style license that can be found in the LICENSE file.
 library static_init.static_init_custom_filter_test;
 
-import 'dart:mirrors';
+import 'dart:async';
 import 'package:static_init/static_init.dart';
 import 'package:unittest/unittest.dart';
 import 'package:unittest/compact_vm_config.dart';
@@ -13,31 +13,31 @@ main() {
   useCompactVMConfiguration();
 
   test('filter option limits which types of annotations will be ran', () {
-    runPhase(1);
-    // Even though Baz extends Bar, only Baz should be run.
-    expect(InitializeTracker.seen, [Baz]);
-    runPhase(2);
-    expect(InitializeTracker.seen, [Baz, 'foo']);
-    runPhase(3);
-    expect(InitializeTracker.seen, [Baz, 'foo', Foo]);
-    runPhase(4);
-    expect(InitializeTracker.seen, [Baz, 'foo', Foo, Bar]);
-
-    // Sanity check, future calls should be no-ops
-    var originalSize = InitializeTracker.seen.length;
-    runPhase(1);
-    runPhase(2);
-    runPhase(3);
-    runPhase(4);
-    run();
-    expect(InitializeTracker.seen.length, originalSize);
+    var originalSize;
+    return runPhase(1).then((_) {
+      // Even though Baz extends Bar, only Baz should be run.
+      expect(InitializeTracker.seen, [Baz]);
+    }).then((_) => runPhase(2)).then((_) {
+      expect(InitializeTracker.seen, [Baz, 'foo']);
+    }).then((_) => runPhase(3)).then((_) {
+      expect(InitializeTracker.seen, [Baz, 'foo', Foo]);
+    }).then((_) => runPhase(4)).then((_) {
+      expect(InitializeTracker.seen, [Baz, 'foo', Foo, Bar]);
+    }).then((_) {
+      originalSize = InitializeTracker.seen.length;
+    }).then((_) => runPhase(1))
+      .then((_) => runPhase(2))
+      .then((_) => runPhase(3))
+      .then((_) => runPhase(4))
+      .then((_) => run()).then((_) {
+      expect(InitializeTracker.seen.length, originalSize);
+    });
   });
 }
 
-runPhase(int phase) {
+Future runPhase(int phase) =>
   run(customFilter: (StaticInitializer meta) =>
       meta is PhasedInitializer && meta.phase == phase);
-}
 
 @PhasedInitializer(3)
 class Foo {}

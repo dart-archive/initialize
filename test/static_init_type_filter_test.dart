@@ -20,16 +20,16 @@ main() {
   });
 
   test('filter option limits which types of annotations will be ran', () {
-    run(typeFilter: const [_Adder]);
-    expect(total, 2);
-    run(typeFilter: const [_Subtractor]);
-    expect(total, 0);
-
-    // Sanity check, future calls should be no-ops
-    run(typeFilter: const [_Adder]);
-    expect(total, 0);
-    run(typeFilter: const [_Subtractor]);
-    expect(total, 0);
+    return run(typeFilter: const [_Adder]).then((_) {
+      expect(total, 2);
+    }).then((_) => run(typeFilter: const [_Subtractor])).then((_) {
+      expect(total, 0);
+    }).then((_) => run(typeFilter: const [_Adder])).then((_) {
+      // Sanity check, future calls should be no-ops
+      expect(total, 0);
+    }).then((_) => run(typeFilter: const [_Subtractor])).then((_) {
+      expect(total, 0);
+    });
   });
 }
 

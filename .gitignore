@@ -1,5 +1,5 @@
 # Pub files.
-build
+/build/
 packages
 .pub
 pubspec.lock
