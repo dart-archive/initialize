@@ -40,19 +40,18 @@ class StaticInitializationCrawler {
   // The primary function in this class, invoke it to crawl and call all the
   // annotations.
   Future run() {
-    // Parse everything into the two queues.
     _readLibraryDeclarations(_root);
-
-    // Empty the init queue.
     return _runInitQueue();
   }
 
   Future _runInitQueue() {
     if (_initQueue.isEmpty) return new Future.value(null);
-    // Remove and invoke the next item.
-    var val = _initQueue.removeFirst()();
-    return (val is Future ? val : new Future.value(null))
-        .then((_) => _runInitQueue());
+
+    var initializer = _initQueue.removeFirst();
+    var val = initializer();
+    if (val is! Future) val = new Future.value(val);
+
+    return val.then((_) => _runInitQueue());
   }
 
   // Reads StaticInitializer annotations on this library and all its
