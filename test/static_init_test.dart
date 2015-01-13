@@ -18,9 +18,9 @@ main() {
 
     test('annotations are seen in post-order with superclasses first', () {
       // Foo comes first because its a superclass of Bar.
-      var expectedNames = [#static_init.test.bar, #static_init.test.foo,
-          #static_init.static_init_test, Foo, Bar, 'bar', 'fooBar', 'foo',
-          'zap', Zap];
+      var expectedNames = [#static_init.test.bar, Foo, Bar, bar,
+          #static_init.test.foo, fooBar, foo, #static_init.static_init_test,
+          zap, Zap];
       expect(InitializeTracker.seen, expectedNames);
     });
 
@@ -39,4 +39,4 @@ main() {
 class Zap {}
 
 @initializeTracker
-zap() => 'zap';
+zap() {}

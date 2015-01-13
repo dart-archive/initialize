@@ -18,11 +18,11 @@ main() {
       // Even though Baz extends Bar, only Baz should be run.
       expect(InitializeTracker.seen, [Baz]);
     }).then((_) => runPhase(2)).then((_) {
-      expect(InitializeTracker.seen, [Baz, 'foo']);
+      expect(InitializeTracker.seen, [Baz, foo]);
     }).then((_) => runPhase(3)).then((_) {
-      expect(InitializeTracker.seen, [Baz, 'foo', Foo]);
+      expect(InitializeTracker.seen, [Baz, foo, Foo]);
     }).then((_) => runPhase(4)).then((_) {
-      expect(InitializeTracker.seen, [Baz, 'foo', Foo, Bar]);
+      expect(InitializeTracker.seen, [Baz, foo, Foo, Bar]);
     }).then((_) {
       originalSize = InitializeTracker.seen.length;
     }).then((_) => runPhase(1))
@@ -43,7 +43,7 @@ Future runPhase(int phase) =>
 class Foo {}
 
 @PhasedInitializer(2)
-foo() => 'foo';
+foo() {}
 
 @PhasedInitializer(4)
 class Bar {}

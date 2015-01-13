@@ -11,7 +11,7 @@ import 'initialize_tracker.dart';
 class Foo {}
 
 @initializeTracker
-fooBar() => 'fooBar';
+fooBar() {}
 
 @initializeTracker
-foo() => 'foo';
+foo() {}

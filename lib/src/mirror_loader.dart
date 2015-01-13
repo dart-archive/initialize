@@ -4,7 +4,7 @@
 library static_init.mirror_loader;
 
 import 'dart:async';
-import 'dart:collection' show ListQueue;
+import 'dart:collection' show Queue;
 import 'dart:mirrors';
 import 'package:static_init/static_init.dart';
 
@@ -29,9 +29,8 @@ class StaticInitializationCrawler {
   // The root library that we start parsing from.
   LibraryMirror _root;
 
-  /// Queues for pending intialization functions to run.
-  final _libraryQueue = new ListQueue<Function>();
-  final _otherQueue = new ListQueue<Function>();
+  /// Queue for pending intialization functions to run.
+  final _initQueue = new Queue<Function>();
 
   StaticInitializationCrawler(
       this.typeFilter, this.customFilter, {LibraryMirror root}) {
@@ -44,15 +43,16 @@ class StaticInitializationCrawler {
     // Parse everything into the two queues.
     _readLibraryDeclarations(_root);
 
-    // First empty the _libraryQueue, then the _otherQueue.
-    return _runInitQueue(_libraryQueue).then((_) => _runInitQueue(_otherQueue));
+    // Empty the init queue.
+    return _runInitQueue();
   }
 
-  Future _runInitQueue(ListQueue<Function> queue) {
-    if (queue.isEmpty) return new Future.value(null);
-    var val = queue.removeFirst()();
+  Future _runInitQueue() {
+    if (_initQueue.isEmpty) return new Future.value(null);
+    // Remove and invoke the next item.
+    var val = _initQueue.removeFirst()();
     return (val is Future ? val : new Future.value(null))
-        .then((_) => _runInitQueue(queue));
+        .then((_) => _runInitQueue());
   }
 
   /// Reads and executes StaticInitializer annotations on this library and all
@@ -67,17 +67,16 @@ class StaticInitializationCrawler {
     }
 
     // Second parse the library directive annotations.
-    _readAnnotations(lib, _libraryQueue);
+    _readAnnotations(lib);
 
     // Last, parse all class and method annotations.
     lib .declarations
         .values
         .where((d) => d is ClassMirror || d is MethodMirror)
-        .forEach((DeclarationMirror d) => _readAnnotations(d, _otherQueue));
+        .forEach((DeclarationMirror d) => _readAnnotations(d));
   }
 
-  void _readAnnotations(DeclarationMirror declaration,
-                        ListQueue<Function> queue) {
+  void _readAnnotations(DeclarationMirror declaration) {
     declaration
         .metadata
         .where((m) {
@@ -99,7 +98,7 @@ class StaticInitializationCrawler {
           // Initialize super classes first, this is the only exception to the
           // post-order rule.
           if (declaration is ClassMirror && declaration.superclass != null) {
-            _readAnnotations(declaration.superclass, queue);
+            _readAnnotations(declaration.superclass);
           }
 
           var annotatedValue;
@@ -110,13 +109,12 @@ class StaticInitializationCrawler {
               throw new UnsupportedError(
                   'Only static methods are supported for StaticInitializers');
             }
-            annotatedValue =
-                () => (declaration.owner as ObjectMirror)
-                          .invoke(declaration.simpleName, const []);
+            annotatedValue = (declaration.owner as ObjectMirror)
+                .getField(declaration.simpleName).reflectee;
           } else {
             annotatedValue = declaration.qualifiedName;
           }
-          queue.addLast(() => meta.reflectee.initialize(annotatedValue));
+          _initQueue.addLast(() => meta.reflectee.initialize(annotatedValue));
         });
   }
 }

@@ -12,4 +12,4 @@ import 'initialize_tracker.dart';
 class Bar extends Foo {}
 
 @initializeTracker
-bar() => 'bar';
+bar() {}

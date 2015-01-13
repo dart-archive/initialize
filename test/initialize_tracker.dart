@@ -13,14 +13,7 @@ class InitializeTracker implements StaticInitializer<dynamic> {
   const InitializeTracker();
 
   @override
-  void initialize(value) {
-    // invoke functions and add their return value, makes testing easier.
-    if (value is Function) {
-      seen.add((value() as InstanceMirror).reflectee);
-    } else {
-      seen.add(value);
-    }
-  }
+  void initialize(value) => seen.add(value);
 }
 
 const initializeTracker = const InitializeTracker();
