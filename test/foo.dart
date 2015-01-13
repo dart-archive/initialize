@@ -4,7 +4,6 @@
 @initializeTracker
 library static_init.test.foo;
 
-export 'bar.dart';
 import 'initialize_tracker.dart';
 
 @initializeTracker
