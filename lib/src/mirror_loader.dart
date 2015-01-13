@@ -32,8 +32,8 @@ class StaticInitializationCrawler {
   /// Queue for pending intialization functions to run.
   final _initQueue = new Queue<Function>();
 
-  StaticInitializationCrawler(
-      this.typeFilter, this.customFilter, {LibraryMirror root}) {
+  StaticInitializationCrawler(this.typeFilter, this.customFilter,
+      {LibraryMirror root}) {
     _root = root == null ? currentMirrorSystem().isolate.rootLibrary : root;
   }
 
@@ -70,51 +70,47 @@ class StaticInitializationCrawler {
     _readAnnotations(lib);
 
     // Last, parse all class and method annotations.
-    lib .declarations
-        .values
+    lib.declarations.values
         .where((d) => d is ClassMirror || d is MethodMirror)
         .forEach((DeclarationMirror d) => _readAnnotations(d));
   }
 
   void _readAnnotations(DeclarationMirror declaration) {
-    declaration
-        .metadata
-        .where((m) {
-          if (m.reflectee is! StaticInitializer) return false;
-          if (typeFilter != null &&
-              !typeFilter.any((t) => m.reflectee.runtimeType == t)) {
-            return false;
-          }
-          if (customFilter != null && !customFilter(m.reflectee)) return false;
-          return true;
-        })
-        .forEach((meta) {
-          if (!_annotationsFound.containsKey(declaration)) {
-            _annotationsFound[declaration] = new Set<InstanceMirror>();
-          }
-          if (_annotationsFound[declaration].contains(meta)) return;
-          _annotationsFound[declaration].add(meta);
+    declaration.metadata.where((m) {
+      if (m.reflectee is! StaticInitializer) return false;
+      if (typeFilter != null &&
+          !typeFilter.any((t) => m.reflectee.runtimeType == t)) {
+        return false;
+      }
+      if (customFilter != null && !customFilter(m.reflectee)) return false;
+      return true;
+    }).forEach((meta) {
+      if (!_annotationsFound.containsKey(declaration)) {
+        _annotationsFound[declaration] = new Set<InstanceMirror>();
+      }
+      if (_annotationsFound[declaration].contains(meta)) return;
+      _annotationsFound[declaration].add(meta);
 
-          // Initialize super classes first, this is the only exception to the
-          // post-order rule.
-          if (declaration is ClassMirror && declaration.superclass != null) {
-            _readAnnotations(declaration.superclass);
-          }
+      // Initialize super classes first, this is the only exception to the
+      // post-order rule.
+      if (declaration is ClassMirror && declaration.superclass != null) {
+        _readAnnotations(declaration.superclass);
+      }
 
-          var annotatedValue;
-          if (declaration is ClassMirror) {
-            annotatedValue = declaration.reflectedType;
-          } else if (declaration is MethodMirror) {
-            if (!declaration.isStatic) {
-              throw new UnsupportedError(
-                  'Only static methods are supported for StaticInitializers');
-            }
-            annotatedValue = (declaration.owner as ObjectMirror)
-                .getField(declaration.simpleName).reflectee;
-          } else {
-            annotatedValue = declaration.qualifiedName;
-          }
-          _initQueue.addLast(() => meta.reflectee.initialize(annotatedValue));
-        });
+      var annotatedValue;
+      if (declaration is ClassMirror) {
+        annotatedValue = declaration.reflectedType;
+      } else if (declaration is MethodMirror) {
+        if (!declaration.isStatic) {
+          throw new UnsupportedError(
+              'Only static methods are supported for StaticInitializers');
+        }
+        annotatedValue = (declaration.owner as ObjectMirror)
+            .getField(declaration.simpleName).reflectee;
+      } else {
+        annotatedValue = declaration.qualifiedName;
+      }
+      _initQueue.addLast(() => meta.reflectee.initialize(annotatedValue));
+    });
   }
 }

@@ -15,12 +15,20 @@ main() {
 
   // Run all static initializers.
   run().then((_) {
-
     test('annotations are seen in post-order with superclasses first', () {
       // Foo comes first because its a superclass of Bar.
-      var expectedNames = [#static_init.test.bar, Foo, Bar, bar,
-          #static_init.test.foo, fooBar, foo, #static_init.static_init_test,
-          zap, Zap];
+      var expectedNames = [
+        #static_init.test.bar,
+        Foo,
+        Bar,
+        bar,
+        #static_init.test.foo,
+        fooBar,
+        foo,
+        #static_init.static_init_test,
+        zap,
+        Zap
+      ];
       expect(InitializeTracker.seen, expectedNames);
     });
 
@@ -31,7 +39,6 @@ main() {
         expect(InitializeTracker.seen.length, originalSize);
       });
     });
-
   });
 }
 

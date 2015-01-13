@@ -4,7 +4,7 @@
 @initializeTracker
 library static_init.test.bar;
 
-import 'foo.dart';  // Make sure cycles are ok.
+import 'foo.dart'; // Make sure cycles are ok.
 import 'initialize_tracker.dart';
 
 // Foo should be initialized first.

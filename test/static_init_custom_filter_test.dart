@@ -25,19 +25,21 @@ main() {
       expect(InitializeTracker.seen, [Baz, foo, Foo, Bar]);
     }).then((_) {
       originalSize = InitializeTracker.seen.length;
-    }).then((_) => runPhase(1))
-      .then((_) => runPhase(2))
-      .then((_) => runPhase(3))
-      .then((_) => runPhase(4))
-      .then((_) => run()).then((_) {
+    })
+        .then((_) => runPhase(1))
+        .then((_) => runPhase(2))
+        .then((_) => runPhase(3))
+        .then((_) => runPhase(4))
+        .then((_) => run())
+        .then((_) {
       expect(InitializeTracker.seen.length, originalSize);
     });
   });
 }
 
-Future runPhase(int phase) =>
-  run(customFilter: (StaticInitializer meta) =>
-      meta is PhasedInitializer && meta.phase == phase);
+Future runPhase(int phase) => run(
+    customFilter: (StaticInitializer meta) =>
+        meta is PhasedInitializer && meta.phase == phase);
 
 @PhasedInitializer(3)
 class Foo {}

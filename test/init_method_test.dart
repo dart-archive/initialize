@@ -15,7 +15,6 @@ main() {
 
   // Run all static initializers.
   run().then((_) {
-
     test('initMethod annotation invokes functions once', () {
       expect(calledFoo, 1);
       expect(calledBar, 1);
@@ -25,7 +24,6 @@ main() {
         expect(calledBar, 1);
       });
     });
-
   });
 }
 
