@@ -18,7 +18,7 @@ part of static_init;
 ///   @Print('hello world!')
 ///   class Foo {}
 ///
-/// Call run() from your main and this will print 'Foo says `hello world!`'
+/// Call [run] from your main and this will print 'Foo says `hello world!`'
 ///
 abstract class StaticInitializer<T> {
   dynamic initialize(T target);

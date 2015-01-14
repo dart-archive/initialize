@@ -10,8 +10,7 @@ import 'dart:async';
 part 'src/init_method.dart';
 part 'src/static_initializer.dart';
 
-/// Top level function which crawls the dependency graph and runs initializers.
-/// If `typeFilter` is supplied then only those types of annotations will be
-/// parsed.
+/// Executes initializers in every library discovered by crawling Dart imports,
+/// exports, and part directives.
 Future run({List<Type> typeFilter, InitializerFilter customFilter}) =>
     new StaticInitializationCrawler(typeFilter, customFilter).run();

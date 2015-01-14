@@ -6,6 +6,7 @@ library static_init.mirror_loader;
 import 'dart:async';
 import 'dart:collection' show Queue;
 import 'dart:mirrors';
+import 'package:path/path.dart' as path;
 import 'package:static_init/static_init.dart';
 
 // Crawls a library and all its dependencies for `StaticInitializer`
@@ -84,11 +85,19 @@ class StaticInitializationCrawler {
 
   Iterable<LibraryDependencyMirror>
       _sortedLibraryDependencies(LibraryMirror lib) =>
-    lib.libraryDependencies
-      ..sort((a, b) => _targetLibraryUri(a).compareTo(_targetLibraryUri(b)));
+    new List.from(lib.libraryDependencies)
+      ..sort((a, b) =>
+          _relativeLibraryUri(a).compareTo(_relativeLibraryUri(b)));
 
-  String _targetLibraryUri(LibraryDependencyMirror lib) =>
-      lib.targetLibrary.uri.toString();
+  String _relativeLibraryUri(LibraryDependencyMirror lib) {
+    if (lib.targetLibrary.uri.scheme == 'file'
+        && lib.sourceLibrary.uri.scheme == 'file') {
+      return path.relative(lib.targetLibrary.uri.path,
+          from: path.dirname(lib.sourceLibrary.uri.path));
+    }
+    return lib.targetLibrary.uri.toString();
+  }
+
 
   Iterable<DeclarationMirror> _sortedLibraryDeclarations(LibraryMirror lib) =>
       lib.declarations.values
@@ -136,6 +145,7 @@ class StaticInitializationCrawler {
         annotatedValue = declaration.reflectedType;
       } else if (declaration is MethodMirror) {
         if (declaration.owner is! LibraryMirror) {
+          // TODO(jakemac): Support static class methods.
           throw _TOP_LEVEL_FUNCTIONS_ONLY;
         }
         annotatedValue = (declaration.owner as ObjectMirror)
@@ -150,17 +160,16 @@ class StaticInitializationCrawler {
     ;
   }
 
+  // Filter function that returns true only if `meta` is a `StaticInitializer`,
+  // it passes the `typeFilter` or `customFilter` if they exist, and it has not
+  // yet been seen.
   bool _filterMetadata(DeclarationMirror declaration, InstanceMirror meta) {
-    // We only care about StaticInitializer annotations
     if (meta.reflectee is! StaticInitializer) return false;
-    // Respect the typeFilter
     if (typeFilter != null &&
         !typeFilter.any((t) => meta.reflectee.runtimeType == t)) {
       return false;
     }
-    // Respect the customFilter
     if (customFilter != null && !customFilter(meta.reflectee)) return false;
-    // Filter out already seen annotations
     if (!_annotationsFound.containsKey(declaration)) {
       _annotationsFound[declaration] = new Set<InstanceMirror>();
     }

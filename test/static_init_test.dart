@@ -4,8 +4,8 @@
 @initializeTracker
 library static_init.static_init_test;
 
-import 'bar.dart';
 import 'foo.dart';
+import 'bar.dart';
 import 'initialize_tracker.dart';
 import 'package:static_init/static_init.dart';
 import 'package:unittest/unittest.dart';
