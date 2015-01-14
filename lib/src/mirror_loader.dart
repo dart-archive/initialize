@@ -23,9 +23,6 @@ class StaticInitializationCrawler {
   // function will be processed.
   final InitializerFilter customFilter;
 
-  // All the libraries we have seen so far.
-  final Set<LibraryMirror> _librariesSeen = new Set<LibraryMirror>();
-
   // The root library that we start parsing from.
   LibraryMirror _root;
 
@@ -56,13 +53,18 @@ class StaticInitializationCrawler {
 
   // Reads StaticInitializer annotations on this library and all its
   // dependencies in post-order.
-  void _readLibraryDeclarations(LibraryMirror lib) {
-    _librariesSeen.add(lib);
+  void _readLibraryDeclarations(LibraryMirror lib,
+                                [Set<LibraryMirror> librariesSeen]) {
+    if (librariesSeen == null) librariesSeen = new Set<LibraryMirror>();
+    librariesSeen.add(lib);
 
     // First visit all our dependencies.
     for (var dependency in _sortedLibraryDependencies(lib)) {
-      if (_librariesSeen.contains(dependency.targetLibrary)) continue;
-      _readLibraryDeclarations(dependency.targetLibrary);
+      // Skip dart: imports, they never use this package.
+      if (dependency.targetLibrary.uri.toString().startsWith('dart:')) continue;
+      if (librariesSeen.contains(dependency.targetLibrary)) continue;
+
+      _readLibraryDeclarations(dependency.targetLibrary, librariesSeen);
     }
 
     // Second parse the library directive annotations.
@@ -83,22 +85,19 @@ class StaticInitializationCrawler {
   Iterable<LibraryDependencyMirror>
       _sortedLibraryDependencies(LibraryMirror lib) =>
     lib.libraryDependencies
-      ..sort((a, b) => _targetLibraryName(a).compareTo(_targetLibraryName(b)));
+      ..sort((a, b) => _targetLibraryUri(a).compareTo(_targetLibraryUri(b)));
 
-  String _targetLibraryName(LibraryDependencyMirror lib) =>
-      MirrorSystem.getName(lib.targetLibrary.qualifiedName);
+  String _targetLibraryUri(LibraryDependencyMirror lib) =>
+      lib.targetLibrary.uri.toString();
 
   Iterable<DeclarationMirror> _sortedLibraryDeclarations(LibraryMirror lib) =>
       lib.declarations.values
           .where((d) => d is ClassMirror || d is MethodMirror)
           .toList()
           ..sort((a, b) {
-            if (a.runtimeType == b.runtimeType) {
-              return _declarationName(a).compareTo(_declarationName(b));
-            }
             if (a is MethodMirror && b is ClassMirror) return -1;
             if (a is ClassMirror && b is MethodMirror) return 1;
-            return 0;
+            return _declarationName(a).compareTo(_declarationName(b));
           });
 
   String _declarationName(DeclarationMirror declaration) =>
