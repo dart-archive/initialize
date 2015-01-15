@@ -55,7 +55,7 @@ class StaticInitializationCrawler {
   // Reads StaticInitializer annotations on this library and all its
   // dependencies in post-order.
   void _readLibraryDeclarations(LibraryMirror lib,
-                                [Set<LibraryMirror> librariesSeen]) {
+      [Set<LibraryMirror> librariesSeen]) {
     if (librariesSeen == null) librariesSeen = new Set<LibraryMirror>();
     librariesSeen.add(lib);
 
@@ -83,26 +83,24 @@ class StaticInitializationCrawler {
     }
   }
 
-  Iterable<LibraryDependencyMirror>
-      _sortedLibraryDependencies(LibraryMirror lib) =>
-    new List.from(lib.libraryDependencies)
-      ..sort((a, b) {
-        var aScheme = a.targetLibrary.uri.scheme;
-        var bScheme = b.targetLibrary.uri.scheme;
-        if (aScheme != 'file' && bScheme == 'file') return -1;
-        if (bScheme != 'file' && aScheme == 'file') return 1;
-        return _relativeLibraryUri(a).compareTo(_relativeLibraryUri(b));
-      });
+  Iterable<LibraryDependencyMirror> _sortedLibraryDependencies(
+      LibraryMirror lib) => new List.from(lib.libraryDependencies)
+        ..sort((a, b) {
+          var aScheme = a.targetLibrary.uri.scheme;
+          var bScheme = b.targetLibrary.uri.scheme;
+          if (aScheme != 'file' && bScheme == 'file') return -1;
+          if (bScheme != 'file' && aScheme == 'file') return 1;
+          return _relativeLibraryUri(a).compareTo(_relativeLibraryUri(b));
+        });
 
   String _relativeLibraryUri(LibraryDependencyMirror lib) {
-    if (lib.targetLibrary.uri.scheme == 'file'
-        && lib.sourceLibrary.uri.scheme == 'file') {
+    if (lib.targetLibrary.uri.scheme == 'file' &&
+        lib.sourceLibrary.uri.scheme == 'file') {
       return path.relative(lib.targetLibrary.uri.path,
           from: path.dirname(lib.sourceLibrary.uri.path));
     }
     return lib.targetLibrary.uri.toString();
   }
-
 
   Iterable<DeclarationMirror> _sortedLibraryDeclarations(LibraryMirror lib) =>
       lib.declarations.values
