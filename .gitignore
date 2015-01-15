@@ -1,0 +1,16 @@
+# Pub files.
+/build/
+packages
+.pub
+pubspec.lock
+
+# Files created by dart2js.
+*.dart.js
+*.dart.precompiled.js
+*.js_
+*.js.deps
+*.js.map
+*.sw?
+
+# Intellij files.
+.idea/
