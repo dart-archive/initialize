@@ -86,8 +86,13 @@ class StaticInitializationCrawler {
   Iterable<LibraryDependencyMirror>
       _sortedLibraryDependencies(LibraryMirror lib) =>
     new List.from(lib.libraryDependencies)
-      ..sort((a, b) =>
-          _relativeLibraryUri(a).compareTo(_relativeLibraryUri(b)));
+      ..sort((a, b) {
+        var aScheme = a.targetLibrary.uri.scheme;
+        var bScheme = b.targetLibrary.uri.scheme;
+        if (aScheme != 'file' && bScheme == 'file') return -1;
+        if (bScheme != 'file' && aScheme == 'file') return 1;
+        return _relativeLibraryUri(a).compareTo(_relativeLibraryUri(b));
+      });
 
   String _relativeLibraryUri(LibraryDependencyMirror lib) {
     if (lib.targetLibrary.uri.scheme == 'file'
