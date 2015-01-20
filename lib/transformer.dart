@@ -14,10 +14,11 @@ import 'package:path/path.dart' as path;
 /// Removes the mirror-based initialization logic and replaces it with static
 /// logic.
 class InitializeTransformer extends Transformer {
-  final BarbackSettings _settings;
   final Resolvers _resolvers;
+  final String _entryPoint;
+  final String _newEntryPoint;
 
-  InitializeTransformer.asPlugin(this._settings)
+  InitializeTransformer(this._entryPoint, this._newEntryPoint)
       : _resolvers = new Resolvers.fromMock({
         // The list of types below is derived from:
         //   * types that are used internally by the resolver (see
@@ -58,11 +59,13 @@ class InitializeTransformer extends Transformer {
             ''',
       });
 
-  String get _entryPoint => _settings.configuration['entryPoint'];
-  String get _newEntryPoint {
-    var val = _settings.configuration['newEntryPoint'];
-    if (val == null) val = _entryPoint.replaceFirst('.dart', '.bootstrap.dart');
-    return val;
+  factory InitializeTransformer.asPlugin(BarbackSettings settings) {
+    var entryPoint = settings.configuration['entryPoint'];
+    var newEntryPoint = settings.configuration['newEntryPoint'];
+    if (newEntryPoint == null) {
+      newEntryPoint = entryPoint.replaceFirst('.dart', '.bootstrap.dart');
+    }
+    return new InitializeTransformer(entryPoint, newEntryPoint);
   }
 
   bool isPrimary(AssetId id) => _entryPoint == id.path;
@@ -105,8 +108,8 @@ class _BootstrapFileBuilder {
   _BootstrapFileBuilder(
       this._resolver, this._transform, this._entryPoint, this._newEntryPoint) {
     _logger = _transform.logger;
-    _initializeLibrary = _resolver
-        .getLibrary(new AssetId('initialize', 'lib/initialize.dart'));
+    _initializeLibrary =
+        _resolver.getLibrary(new AssetId('initialize', 'lib/initialize.dart'));
     _initializer = _initializeLibrary.getType('Initializer');
   }
 
@@ -183,8 +186,8 @@ class _BootstrapFileBuilder {
     var libraryPrefixes = new Map<LibraryElement, String>();
 
     // Import the static_loader and original entry point.
-    importsBuffer.writeln(
-        "import 'package:initialize/src/static_loader.dart';");
+    importsBuffer
+        .writeln("import 'package:initialize/src/static_loader.dart';");
     _maybeWriteImport(entryLib, libraryPrefixes, importsBuffer);
 
     initializersBuffer.writeln('  initializers.addAll([');

@@ -4,15 +4,14 @@
 library initialize.transformer_test;
 
 import 'common.dart';
-import 'package:barback/barback.dart';
 import 'package:initialize/transformer.dart';
 import 'package:unittest/compact_vm_config.dart';
 
 main() {
   useCompactVMConfiguration();
 
-  var transformer = new InitializeTransformer.asPlugin(
-      new BarbackSettings({'entryPoint': 'web/index.dart'}, BarbackMode.DEBUG));
+  var transformer =
+      new InitializeTransformer('web/index.dart', 'web/index.bootstrap.dart');
 
   testPhases('transformer', [[transformer]], {
     'a|web/index.dart': '''
