@@ -1,12 +1,12 @@
 // Copyright (c) 2015, the Dart project authors.  Please see the AUTHORS file
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
-library static_init.test.initialize_tracker;
+library initialize.test.initialize_tracker;
 
-import 'package:static_init/static_init.dart';
+import 'package:initialize/initialize.dart';
 
-// Static Initializer that just saves everything it sees.
-class InitializeTracker implements StaticInitializer<dynamic> {
+// Initializer that just saves everything it sees.
+class InitializeTracker implements Initializer<dynamic> {
   static final List seen = [];
 
   const InitializeTracker();

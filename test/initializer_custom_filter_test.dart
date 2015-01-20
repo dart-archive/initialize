@@ -1,10 +1,10 @@
 // Copyright (c) 2015, the Dart project authors.  Please see the AUTHORS file
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
-library static_init.static_init_custom_filter_test;
+library initialize.initializer_custom_filter_test;
 
 import 'dart:async';
-import 'package:static_init/static_init.dart';
+import 'package:initialize/initialize.dart';
 import 'package:unittest/unittest.dart';
 import 'package:unittest/compact_vm_config.dart';
 import 'initialize_tracker.dart';
@@ -38,7 +38,7 @@ main() {
 }
 
 Future runPhase(int phase) => run(
-    customFilter: (StaticInitializer meta) =>
+    customFilter: (Initializer meta) =>
         meta is PhasedInitializer && meta.phase == phase);
 
 @PhasedInitializer(3)
@@ -53,7 +53,7 @@ class Bar {}
 @PhasedInitializer(1)
 class Baz extends Bar {}
 
-// Static Initializer that has a phase associated with it, this can be used in
+// Initializer that has a phase associated with it, this can be used in
 // combination with a custom filter to run intialization in phases.
 class PhasedInitializer extends InitializeTracker {
   final int phase;

@@ -1,9 +1,9 @@
 // Copyright (c) 2015, the Dart project authors.  Please see the AUTHORS file
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
-library static_init.static_init_type_filter_test;
+library initialize.initializer_type_filter_test;
 
-import 'package:static_init/static_init.dart';
+import 'package:initialize/initialize.dart';
 import 'package:unittest/unittest.dart';
 import 'package:unittest/compact_vm_config.dart';
 
@@ -40,8 +40,8 @@ b() {}
 @subtractor
 c() {}
 
-// Static Initializer that increments `total` by one.
-class _Adder implements StaticInitializer<dynamic> {
+// Initializer that increments `total` by one.
+class _Adder implements Initializer<dynamic> {
   const _Adder();
 
   @override
@@ -49,8 +49,8 @@ class _Adder implements StaticInitializer<dynamic> {
 }
 const adder = const _Adder();
 
-// Static Initializer that decrements `total` by one.
-class _Subtractor implements StaticInitializer<dynamic> {
+// Initializer that decrements `total` by one.
+class _Subtractor implements Initializer<dynamic> {
   const _Subtractor();
 
   @override

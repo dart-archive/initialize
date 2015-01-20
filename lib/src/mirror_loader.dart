@@ -1,22 +1,21 @@
 // Copyright (c) 2015, the Dart project authors.  Please see the AUTHORS file
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
-library static_init.mirror_loader;
+library initialize.mirror_loader;
 
-import 'dart:async';
 import 'dart:collection' show Queue;
 import 'dart:mirrors';
 import 'package:path/path.dart' as path;
-import 'package:static_init/static_init.dart';
+import 'package:initialize/initialize.dart';
 
 Queue<Function> loadInitializers(
     {List<Type> typeFilter, InitializerFilter customFilter}) {
-  return new StaticInitializationCrawler(typeFilter, customFilter).run();
+  return new InitializationCrawler(typeFilter, customFilter).run();
 }
 
-// Crawls a library and all its dependencies for `StaticInitializer`
-// annotations using mirrors
-class StaticInitializationCrawler {
+// Crawls a library and all its dependencies for `Initializer` annotations using
+// mirrors
+class InitializationCrawler {
   // Set of all visited annotations, keys are the declarations that were
   // annotated, values are the annotations that have been processed.
   static final _annotationsFound =
@@ -32,7 +31,7 @@ class StaticInitializationCrawler {
   // The root library that we start parsing from.
   LibraryMirror _root;
 
-  StaticInitializationCrawler(this.typeFilter, this.customFilter,
+  InitializationCrawler(this.typeFilter, this.customFilter,
       {LibraryMirror root}) {
     _root = root == null ? currentMirrorSystem().isolate.rootLibrary : root;
   }
@@ -41,8 +40,8 @@ class StaticInitializationCrawler {
   // annotations into a queue of init functions.
   Queue<Function> run() => _readLibraryDeclarations(_root);
 
-  // Reads StaticInitializer annotations on this library and all its
-  // dependencies in post-order.
+  // Reads Initializer annotations on this library and all its dependencies in
+  // post-order.
   Queue<Function> _readLibraryDeclarations(LibraryMirror lib,
       [Set<LibraryMirror> librariesSeen, Queue<Function> queue]) {
     if (librariesSeen == null) librariesSeen = new Set<LibraryMirror>();
@@ -108,7 +107,7 @@ class StaticInitializationCrawler {
       MirrorSystem.getName(declaration.qualifiedName);
 
   // Reads annotations on declarations and adds them to `_initQueue` if they are
-  // static initializers.
+  // initializers.
   void _readAnnotations(DeclarationMirror declaration, Queue<Function> queue) {
     var annotations =
         declaration.metadata.where((m) => _filterMetadata(declaration, m));
@@ -128,8 +127,8 @@ class StaticInitializationCrawler {
           if (superMetas.isNotEmpty) {
             throw new UnsupportedError(
                 'We have detected a cycle in your import graph when running '
-                'static initializers on ${declaration.qualifiedName}. This means '
-                'the super class ${declaration.superclass.qualifiedName} has a '
+                'initializers on ${declaration.qualifiedName}. This means the '
+                'super class ${declaration.superclass.qualifiedName} has a '
                 'dependency on this library (possibly transitive).');
           }
         }
@@ -154,11 +153,11 @@ class StaticInitializationCrawler {
     }
   }
 
-  // Filter function that returns true only if `meta` is a `StaticInitializer`,
-  // it passes the `typeFilter` or `customFilter` if they exist, and it has not
+  // Filter function that returns true only if `meta` is an `Initializer`,
+  // it passes the `typeFilter` and `customFilter` if they exist, and it has not
   // yet been seen.
   bool _filterMetadata(DeclarationMirror declaration, InstanceMirror meta) {
-    if (meta.reflectee is! StaticInitializer) return false;
+    if (meta.reflectee is! Initializer) return false;
     if (typeFilter != null &&
         !typeFilter.any((t) => meta.reflectee.runtimeType == t)) {
       return false;
@@ -173,8 +172,8 @@ class StaticInitializationCrawler {
 }
 
 final _TOP_LEVEL_FUNCTIONS_ONLY = new UnsupportedError(
-    'Only top level methods are supported for StaticInitializers');
+    'Only top level methods are supported for initializers');
 
 final _UNSUPPORTED_DECLARATION = new UnsupportedError(
-    'StaticInitializers are only supported on libraries, classes, and top '
-    'level methods');
+    'Initializers are only supported on libraries, classes, and top level '
+    'methods');
