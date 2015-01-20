@@ -9,6 +9,11 @@ import 'dart:mirrors';
 import 'package:path/path.dart' as path;
 import 'package:static_init/static_init.dart';
 
+Queue<Function> loadInitializers(
+    {List<Type> typeFilter, InitializerFilter customFilter}) {
+  return new StaticInitializationCrawler(typeFilter, customFilter).run();
+}
+
 // Crawls a library and all its dependencies for `StaticInitializer`
 // annotations using mirrors
 class StaticInitializationCrawler {
@@ -27,36 +32,21 @@ class StaticInitializationCrawler {
   // The root library that we start parsing from.
   LibraryMirror _root;
 
-  /// Queue for pending intialization functions to run.
-  final _initQueue = new Queue<Function>();
-
   StaticInitializationCrawler(this.typeFilter, this.customFilter,
       {LibraryMirror root}) {
     _root = root == null ? currentMirrorSystem().isolate.rootLibrary : root;
   }
 
-  // The primary function in this class, invoke it to crawl and call all the
-  // annotations.
-  Future run() {
-    _readLibraryDeclarations(_root);
-    return _runInitQueue();
-  }
-
-  Future _runInitQueue() {
-    if (_initQueue.isEmpty) return new Future.value(null);
-
-    var initializer = _initQueue.removeFirst();
-    var val = initializer();
-    if (val is! Future) val = new Future.value(val);
-
-    return val.then((_) => _runInitQueue());
-  }
+  // The primary function in this class, invoke it to crawl and collect all the
+  // annotations into a queue of init functions.
+  Queue<Function> run() => _readLibraryDeclarations(_root);
 
   // Reads StaticInitializer annotations on this library and all its
   // dependencies in post-order.
-  void _readLibraryDeclarations(LibraryMirror lib,
-      [Set<LibraryMirror> librariesSeen]) {
+  Queue<Function> _readLibraryDeclarations(LibraryMirror lib,
+      [Set<LibraryMirror> librariesSeen, Queue<Function> queue]) {
     if (librariesSeen == null) librariesSeen = new Set<LibraryMirror>();
+    if (queue == null) queue = new Queue<Function>();
     librariesSeen.add(lib);
 
     // First visit all our dependencies.
@@ -65,33 +55,35 @@ class StaticInitializationCrawler {
       if (dependency.targetLibrary.uri.toString().startsWith('dart:')) continue;
       if (librariesSeen.contains(dependency.targetLibrary)) continue;
 
-      _readLibraryDeclarations(dependency.targetLibrary, librariesSeen);
+      _readLibraryDeclarations(dependency.targetLibrary, librariesSeen, queue);
     }
 
     // Second parse the library directive annotations.
-    _readAnnotations(lib);
+    _readAnnotations(lib, queue);
 
     // Last, parse all class and method annotations.
     for (var declaration in _sortedLibraryDeclarations(lib)) {
-      _readAnnotations(declaration);
+      _readAnnotations(declaration, queue);
       // Check classes for static annotations which are not supported
       if (declaration is ClassMirror) {
         for (var classDeclaration in declaration.declarations.values) {
-          _readAnnotations(classDeclaration);
+          _readAnnotations(classDeclaration, queue);
         }
       }
     }
+
+    return queue;
   }
 
   Iterable<LibraryDependencyMirror> _sortedLibraryDependencies(
       LibraryMirror lib) => new List.from(lib.libraryDependencies)
-        ..sort((a, b) {
-          var aScheme = a.targetLibrary.uri.scheme;
-          var bScheme = b.targetLibrary.uri.scheme;
-          if (aScheme != 'file' && bScheme == 'file') return -1;
-          if (bScheme != 'file' && aScheme == 'file') return 1;
-          return _relativeLibraryUri(a).compareTo(_relativeLibraryUri(b));
-        });
+    ..sort((a, b) {
+      var aScheme = a.targetLibrary.uri.scheme;
+      var bScheme = b.targetLibrary.uri.scheme;
+      if (aScheme != 'file' && bScheme == 'file') return -1;
+      if (bScheme != 'file' && aScheme == 'file') return 1;
+      return _relativeLibraryUri(a).compareTo(_relativeLibraryUri(b));
+    });
 
   String _relativeLibraryUri(LibraryDependencyMirror lib) {
     if (lib.targetLibrary.uri.scheme == 'file' &&
@@ -106,18 +98,18 @@ class StaticInitializationCrawler {
       lib.declarations.values
           .where((d) => d is ClassMirror || d is MethodMirror)
           .toList()
-          ..sort((a, b) {
-            if (a is MethodMirror && b is ClassMirror) return -1;
-            if (a is ClassMirror && b is MethodMirror) return 1;
-            return _declarationName(a).compareTo(_declarationName(b));
-          });
+    ..sort((a, b) {
+      if (a is MethodMirror && b is ClassMirror) return -1;
+      if (a is ClassMirror && b is MethodMirror) return 1;
+      return _declarationName(a).compareTo(_declarationName(b));
+    });
 
   String _declarationName(DeclarationMirror declaration) =>
       MirrorSystem.getName(declaration.qualifiedName);
 
   // Reads annotations on declarations and adds them to `_initQueue` if they are
   // static initializers.
-  void _readAnnotations(DeclarationMirror declaration) {
+  void _readAnnotations(DeclarationMirror declaration, Queue<Function> queue) {
     var annotations =
         declaration.metadata.where((m) => _filterMetadata(declaration, m));
     for (var meta in annotations) {
@@ -128,7 +120,7 @@ class StaticInitializationCrawler {
       // cycles in the imports.
       if (declaration is ClassMirror && declaration.superclass != null) {
         if (declaration.superclass.owner == declaration.owner) {
-          _readAnnotations(declaration.superclass);
+          _readAnnotations(declaration.superclass, queue);
         } else {
           var superMetas = declaration.superclass.metadata
               .where((m) => _filterMetadata(declaration.superclass, m))
@@ -158,9 +150,8 @@ class StaticInitializationCrawler {
       } else {
         throw _UNSUPPORTED_DECLARATION;
       }
-      _initQueue.addLast(() => meta.reflectee.initialize(annotatedValue));
+      queue.addLast(() => meta.reflectee.initialize(annotatedValue));
     }
-    ;
   }
 
   // Filter function that returns true only if `meta` is a `StaticInitializer`,

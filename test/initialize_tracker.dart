@@ -3,7 +3,6 @@
 // BSD-style license that can be found in the LICENSE file.
 library static_init.test.initialize_tracker;
 
-import 'dart:mirrors';
 import 'package:static_init/static_init.dart';
 
 // Static Initializer that just saves everything it sees.

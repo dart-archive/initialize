@@ -3,7 +3,6 @@
 // BSD-style license that can be found in the LICENSE file.
 library static_init.static_init_type_filter_test;
 
-import 'dart:mirrors';
 import 'package:static_init/static_init.dart';
 import 'package:unittest/unittest.dart';
 import 'package:unittest/compact_vm_config.dart';

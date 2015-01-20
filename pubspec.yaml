@@ -3,7 +3,29 @@ version: 0.0.0
 author: Polymer.dart Authors <web@dartlang.org>
 description: Generic building blocks for doing static initialization.
 dependencies:
+  barback: '>=0.14.2 <0.16.0'
+  code_transformers: '>=0.2.3 <0.3.0'
 dev_dependencies:
   unittest: '>=0.10.0 <0.12.0'
 environment:
   sdk: '>=1.4.0 <2.0.0'
+transformers:
+- static_init/build/loader_replacer:
+    $include: lib/static_init.dart
+- static_init:
+    $include: test/static_init_test.dart
+    entryPoint: test/static_init_test.dart
+- static_init:
+    $include: test/static_init_cycle_error_test.dart
+    entryPoint: test/static_init_cycle_error_test.dart
+- static_init:
+    $include: test/static_init_custom_filter_test.dart
+    entryPoint: test/static_init_custom_filter_test.dart
+- static_init:
+    $include: test/static_init_type_filter_test.dart
+    entryPoint: test/static_init_type_filter_test.dart
+- static_init:
+    $include: test/init_method_test.dart
+    entryPoint: test/init_method_test.dart
+- $dart2js:
+    $exclude: '**/*.dart'
