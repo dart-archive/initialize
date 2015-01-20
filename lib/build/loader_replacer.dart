@@ -1,7 +1,7 @@
 // Copyright (c) 2015, the Dart project authors.  Please see the AUTHORS file
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
-library static_init.build.loader_replacer;
+library initialize.build.loader_replacer;
 
 import 'dart:async';
 import 'package:barback/barback.dart';
@@ -11,7 +11,7 @@ class LoaderReplacer extends Transformer {
   LoaderReplacer.asPlugin();
 
   bool isPrimary(AssetId id) =>
-      id.package == 'static_init' && id.path == 'lib/static_init.dart';
+      id.package == 'initialize' && id.path == 'lib/initialize.dart';
 
   Future apply(Transform transform) {
     var id = transform.primaryInput.id;

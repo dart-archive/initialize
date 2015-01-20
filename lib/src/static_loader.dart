@@ -1,15 +1,15 @@
 // Copyright (c) 2015, the Dart project authors.  Please see the AUTHORS file
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
-library static_init.static_loader;
+library initialize.static_loader;
 
 import 'dart:collection' show Queue;
-import 'package:static_init/static_init.dart';
+import 'package:initialize/initialize.dart';
 
 /// This represents an annotation/declaration pair.
 class InitEntry<T> {
   /// The annotation instance.
-  final StaticInitializer<T> meta;
+  final Initializer<T> meta;
 
   /// The target of the annotation to pass to initialize.
   final T target;

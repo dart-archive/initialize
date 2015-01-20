@@ -1,7 +1,7 @@
 // Copyright (c) 2015, the Dart project authors.  Please see the AUTHORS file
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
-library static_init.transformer;
+library initialize.transformer;
 
 import 'dart:async';
 import 'dart:collection' show Queue;
@@ -90,10 +90,10 @@ class _BootstrapFileBuilder {
   AssetId _entryPoint;
   AssetId _newEntryPoint;
 
-  /// The resolved static_init library.
-  LibraryElement _staticInitLibrary;
-  /// The resolved StaticInitializer class from the static_init library.
-  ClassElement _staticInitializer;
+  /// The resolved initialize library.
+  LibraryElement _initializeLibrary;
+  /// The resolved Initializer class from the initialize library.
+  ClassElement _initializer;
 
   /// Queue for intialization annotations.
   final _initQueue = new Queue<_InitializerData>();
@@ -105,9 +105,9 @@ class _BootstrapFileBuilder {
   _BootstrapFileBuilder(
       this._resolver, this._transform, this._entryPoint, this._newEntryPoint) {
     _logger = _transform.logger;
-    _staticInitLibrary = _resolver
-        .getLibrary(new AssetId('static_init', 'lib/static_init.dart'));
-    _staticInitializer = _staticInitLibrary.getType('StaticInitializer');
+    _initializeLibrary = _resolver
+        .getLibrary(new AssetId('initialize', 'lib/initialize.dart'));
+    _initializer = _initializeLibrary.getType('Initializer');
   }
 
   /// Adds the new entry point file to the transform. Should only be ran once.
@@ -119,8 +119,8 @@ class _BootstrapFileBuilder {
         new Asset.fromString(_newEntryPoint, _buildNewEntryPoint(entryLib)));
   }
 
-  /// Reads StaticInitializer annotations on this library and all
-  /// its dependencies in post-order.
+  /// Reads Initializer annotations on this library and all its dependencies in
+  /// post-order.
   void _readLibraries(LibraryElement library, [Set<LibraryElement> seen]) {
     if (seen == null) seen = new Set<LibraryElement>();
     seen.add(library);
@@ -145,8 +145,8 @@ class _BootstrapFileBuilder {
             superClass.element.library != clazz.library) {
           _logger.warning(
               'We have detected a cycle in your import graph when running '
-              'static initializers on ${clazz.name}. This means the super '
-              'class ${superClass.name} has a dependency on this library '
+              'initializers on ${clazz.name}. This means the super class '
+              '${superClass.name} has a dependency on this library '
               '(possibly transitive).');
         }
         superClass = superClass.superclass;
@@ -158,12 +158,12 @@ class _BootstrapFileBuilder {
   bool _readAnnotations(Element element) {
     var found = false;
     element.metadata.where((ElementAnnotation meta) {
-      // First filter out anything that is not a StaticInitializer.
+      // First filter out anything that is not a Initializer.
       var e = meta.element;
       if (e is PropertyAccessorElement) {
-        return _isStaticInitializer(e.variable.evaluationResult.value.type);
+        return _isInitializer(e.variable.evaluationResult.value.type);
       } else if (e is ConstructorElement) {
-        return _isStaticInitializer(e.returnType);
+        return _isInitializer(e.returnType);
       }
       return false;
     }).where((ElementAnnotation meta) {
@@ -184,7 +184,7 @@ class _BootstrapFileBuilder {
 
     // Import the static_loader and original entry point.
     importsBuffer.writeln(
-        "import 'package:static_init/src/static_loader.dart';");
+        "import 'package:initialize/src/static_loader.dart';");
     _maybeWriteImport(entryLib, libraryPrefixes, importsBuffer);
 
     initializersBuffer.writeln('  initializers.addAll([');
@@ -250,8 +250,8 @@ $initializersBuffer
       elementString =
           '${libraryPrefixes[data.element.library]}.${element.name}';
     } else {
-      _logger.error('StaticInitializers can only be applied to top level '
-          'functions, libraries, and classes.');
+      _logger.error('Initializers can only be applied to top level functins, '
+          'libraries, and classes.');
     }
 
     if (annotationElement is ConstructorElement) {
@@ -263,8 +263,8 @@ $initializersBuffer
         astMeta = node.metadata;
       } else {
         _logger.error(
-            'StaticInitializer annotations are only supported on libraries, '
-            'classes, and top level methods. Found $node.');
+            'Initializer annotations are only supported on libraries, classes, '
+            'and top level methods. Found $node.');
       }
       final annotation =
           astMeta.firstWhere((m) => m.elementAnnotation == data.annotation);
@@ -285,12 +285,12 @@ $initializersBuffer
     }
   }
 
-  bool _isStaticInitializer(InterfaceType type) {
+  bool _isInitializer(InterfaceType type) {
     if (type == null) return false;
-    if (type.element.type == _staticInitializer.type) return true;
-    if (_isStaticInitializer(type.superclass)) return true;
+    if (type.element.type == _initializer.type) return true;
+    if (_isInitializer(type.superclass)) return true;
     for (var interface in type.interfaces) {
-      if (_isStaticInitializer(interface)) return true;
+      if (_isInitializer(interface)) return true;
     }
     return false;
   }

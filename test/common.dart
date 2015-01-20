@@ -1,8 +1,7 @@
 // Copyright (c) 2013, the Dart project authors.  Please see the AUTHORS file
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
-
-library static_init.test.build.common;
+library initialize.test.build.common;
 
 import 'package:barback/barback.dart';
 import 'package:code_transformers/src/test_harness.dart';
