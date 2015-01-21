@@ -229,8 +229,8 @@ $initializersBuffer
       buffer.write("import 'package:${id.package}/${packagePath}'");
     } else if (id.package != _newEntryPoint.package) {
       _logger.error("Can't import `${id}` from `${_newEntryPoint}`");
-    } else if (id.path.split(path.separator)[0] ==
-        _newEntryPoint.path.split(path.separator)[0]) {
+    } else if (path.url.split(id.path)[0] ==
+        path.url.split(_newEntryPoint.path)[0]) {
       var relativePath =
           path.relative(id.path, from: path.dirname(_newEntryPoint.path));
       buffer.write("import '${relativePath}'");
