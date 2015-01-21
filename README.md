@@ -19,6 +19,21 @@ completes before running the next initializer.
 
 ## Usage
 
+### @initMethod
+
+Ther is one initializer which comes with this package, `@initMethod`. Annotate
+any top level function with this and it will be invoked automatically. For
+example, the program below will print `hello`:
+
+    import 'package:initialize/initialize.dart';
+    
+    @initMethod
+    printHello() => print('hello');
+    
+    main() => run();
+
+### Running the initializers
+
 In order to run all the initializers, you need to import
 `package:initialize/initialize.dart` and invoke the `run` method. This should
 typically be the first thing to happen in your main. That method returns a Future,
@@ -53,19 +68,6 @@ transformer:
 **Note**: Until https://github.com/dart-lang/initialize/issues/10 is resolved, it
 is necessary to rewrite any script tags pointing to your entry point to the new
 bootstrapped entry point manually.
-
-## @initMethod
-
-Ther is one initializer which comes with this package, `@initMethod`. Annotate
-any top level function with this and it will be invoked automatically. For
-example, the program below will print `hello`:
-
-    import 'package:initialize/initialize.dart';
-    
-    @initMethod
-    printHello() => print('hello');
-    
-    main() => run();
 
 ## Creating your own initializer
 
