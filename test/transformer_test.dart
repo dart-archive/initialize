@@ -10,10 +10,15 @@ import 'package:unittest/compact_vm_config.dart';
 main() {
   useCompactVMConfiguration();
 
-  var transformer =
-      new InitializeTransformer('web/index.dart', 'web/index.bootstrap.dart');
+  var transformer = new InitializeTransformer(
+      'web/index.dart', 'web/index.bootstrap.dart', 'web/index.html');
 
   testPhases('transformer', [[transformer]], {
+    'a|web/index.html': '''
+          <html><head></head><body>
+            <script type="application/dart" src="index.dart"></script>
+          </body></html>
+          '''.replaceAll('          ', ''),
     'a|web/index.dart': '''
           library web_foo;
 
@@ -67,8 +72,13 @@ main() {
             const _InitMethod();
           }
           const _InitMethod initMethod = const _InitMethod();
-          '''
+          ''',
   }, {
+    'a|web/index.html': '''
+          <html><head></head><body>
+            <script type="application/dart" src="index.bootstrap.dart"></script>
+
+          </body></html>'''.replaceAll('          ', ''),
     'a|web/index.bootstrap.dart': '''
           import 'package:initialize/src/static_loader.dart';
           import 'index.dart' as i0;
@@ -91,6 +101,6 @@ main() {
 
             i0.main();
           }
-          '''.replaceAll('          ', '')
+          '''.replaceAll('          ', ''),
   });
 }
