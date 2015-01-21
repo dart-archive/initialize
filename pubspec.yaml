@@ -2,6 +2,7 @@ name: initialize
 version: 0.1.0
 author: Polymer.dart Authors <web@dartlang.org>
 description: Generic building blocks for doing static initialization.
+homepage: https://github.com/dart-lang/initialize
 dependencies:
   barback: '>=0.14.2 <0.16.0'
   code_transformers: '>=0.2.3 <0.3.0'
