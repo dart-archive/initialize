@@ -1,8 +1,8 @@
 Initialize
 ==========
 
-This package provides a common interface for static annotations on top level
-methods, classes, and libraries. The interface looks like this:
+This package provides a common interface for initialization annotations on top
+level methods, classes, and libraries. The interface looks like this:
 
     abstract class Initializer<T> {
       dynamic initialize(T target);
