@@ -15,9 +15,7 @@
 build/test/transformer_test.dart: Skip
 build/test/static_init_cycle_error_test.dart: Skip # Build time warning
 
-[ $compiler == dart2js ]
-test/*: Skip  # raw tests only meant to be run in dartium. Other browsers run
-              # the output of pub-build
-
 [ $browser ]
-test/transformer_test.dart: Skip # vm only test.
+# All tests are for the standalone vm only
+build/test/*: Skip
+test/*: Skip
