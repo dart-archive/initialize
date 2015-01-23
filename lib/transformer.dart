@@ -64,12 +64,12 @@ class InitializeTransformer extends Transformer {
       });
 
   factory InitializeTransformer.asPlugin(BarbackSettings settings) {
-    var entryPoint = settings.configuration['entryPoint'];
-    var newEntryPoint = settings.configuration['newEntryPoint'];
+    var entryPoint = settings.configuration['entry_point'];
+    var newEntryPoint = settings.configuration['new_entry_point'];
     if (newEntryPoint == null) {
       newEntryPoint = entryPoint.replaceFirst('.dart', '.bootstrap.dart');
     }
-    var htmlEntryPoint = settings.configuration['htmlEntryPoint'];
+    var htmlEntryPoint = settings.configuration['html_entry_point'];
     return new InitializeTransformer(entryPoint, newEntryPoint, htmlEntryPoint);
   }
 
