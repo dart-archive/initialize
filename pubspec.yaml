@@ -1,5 +1,5 @@
 name: initialize
-version: 0.1.1-dev
+version: 0.2.0-dev
 author: Polymer.dart Authors <web@dartlang.org>
 description: Generic building blocks for doing static initialization.
 homepage: https://github.com/dart-lang/initialize
@@ -17,18 +17,18 @@ transformers:
     $include: lib/initialize.dart
 - initialize:
     $include: test/initializer_test.dart
-    entryPoint: test/initializer_test.dart
+    entry_point: test/initializer_test.dart
 - initialize:
     $include: test/initializer_cycle_error_test.dart
-    entryPoint: test/initializer_cycle_error_test.dart
+    entry_point: test/initializer_cycle_error_test.dart
 - initialize:
     $include: test/initializer_custom_filter_test.dart
-    entryPoint: test/initializer_custom_filter_test.dart
+    entry_point: test/initializer_custom_filter_test.dart
 - initialize:
     $include: test/initializer_type_filter_test.dart
-    entryPoint: test/initializer_type_filter_test.dart
+    entry_point: test/initializer_type_filter_test.dart
 - initialize:
     $include: test/init_method_test.dart
-    entryPoint: test/init_method_test.dart
+    entry_point: test/init_method_test.dart
 - $dart2js:
     $exclude: '**/*.dart'

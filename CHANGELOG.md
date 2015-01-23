@@ -1,8 +1,11 @@
-## 0.1.1-dev
+## 0.2.0-dev
 
-Added `htmlEntryPoint` option to the transformer. This will search that file for
-any script tag whose src is `entryPoint` and rewrite it to point at the
-bootstrapped file `newEntryPoint`.
+* `entryPoint` and `newEntryPoint` transformer options were renamed to
+`entry_point` and `new_entry_pont`.
+
+* Added `html_entry_point` option to the transformer. This will search that file
+for any script tag whose src is `entry_point` and rewrite it to point at the
+bootstrapped file `new_entry_point`.
 
 ## 0.1.0+1
 
