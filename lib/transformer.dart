@@ -9,6 +9,8 @@ import 'package:analyzer/src/generated/ast.dart';
 import 'package:analyzer/src/generated/element.dart';
 import 'package:barback/barback.dart';
 import 'package:code_transformers/resolver.dart';
+import 'package:html5lib/dom.dart' as dom;
+import 'package:html5lib/parser.dart' show parse;
 import 'package:path/path.dart' as path;
 
 /// Removes the mirror-based initialization logic and replaces it with static
@@ -17,8 +19,10 @@ class InitializeTransformer extends Transformer {
   final Resolvers _resolvers;
   final String _entryPoint;
   final String _newEntryPoint;
+  final String _htmlEntryPoint;
 
-  InitializeTransformer(this._entryPoint, this._newEntryPoint)
+  InitializeTransformer(
+      this._entryPoint, this._newEntryPoint, this._htmlEntryPoint)
       : _resolvers = new Resolvers.fromMock({
         // The list of types below is derived from:
         //   * types that are used internally by the resolver (see
@@ -65,12 +69,23 @@ class InitializeTransformer extends Transformer {
     if (newEntryPoint == null) {
       newEntryPoint = entryPoint.replaceFirst('.dart', '.bootstrap.dart');
     }
-    return new InitializeTransformer(entryPoint, newEntryPoint);
+    var htmlEntryPoint = settings.configuration['htmlEntryPoint'];
+    return new InitializeTransformer(entryPoint, newEntryPoint, htmlEntryPoint);
   }
 
-  bool isPrimary(AssetId id) => _entryPoint == id.path;
+  bool isPrimary(AssetId id) =>
+      _entryPoint == id.path || _htmlEntryPoint == id.path;
 
   Future apply(Transform transform) {
+    if (transform.primaryInput.id.path == _entryPoint) {
+      return _buildBootstrapFile(transform);
+    } else if (transform.primaryInput.id.path == _htmlEntryPoint) {
+      return _replaceEntryWithBootstrap(transform);
+    }
+    return null;
+  }
+
+  Future _buildBootstrapFile(Transform transform) {
     var newEntryPointId =
         new AssetId(transform.primaryInput.id.package, _newEntryPoint);
     return transform.hasInput(newEntryPointId).then((exists) {
@@ -85,6 +100,47 @@ class InitializeTransformer extends Transformer {
       }
     });
   }
+
+  Future _replaceEntryWithBootstrap(Transform transform) {
+    // For now at least, _htmlEntryPoint, _entryPoint, and _newEntryPoint need
+    // to be in the same folder.
+    // TODO(jakemac): support package urls with _entryPoint or _newEntryPoint
+    // in `lib`, and _htmlEntryPoint in another directory.
+    var _expectedDir = path.split(_htmlEntryPoint)[0];
+    if (_expectedDir != path.split(_entryPoint)[0] ||
+        _expectedDir != path.split(_newEntryPoint)[0]) {
+      transform.logger.error(
+          'htmlEntryPoint, entryPoint, and newEntryPoint(if supplied) all must '
+          'be in the same top level directory.');
+    }
+
+    return transform.primaryInput.readAsString().then((String html) {
+      var found = false;
+      var doc = parse(html);
+      var scripts = doc.querySelectorAll('script[type="application/dart"]');
+      for (dom.Element script in scripts) {
+        if (!_isEntryPointScript(script)) continue;
+        script.attributes['src'] = _relativeDartEntryPath(_newEntryPoint);
+        found = true;
+      }
+      if (!found) {
+        transform.logger.error(
+            'Unable to find script for $_entryPoint in $_htmlEntryPoint.');
+      }
+      return transform.addOutput(
+          new Asset.fromString(transform.primaryInput.id, doc.outerHtml));
+    });
+  }
+
+  // Checks if the src of this script tag is pointing at `_entryPoint`.
+  bool _isEntryPointScript(dom.Element script) =>
+      path.normalize(script.attributes['src']) ==
+          _relativeDartEntryPath(_entryPoint);
+
+  // The relative path from `_htmlEntryPoint` to `dartEntry`. You must ensure
+  // that neither of these is null before calling this function.
+  String _relativeDartEntryPath(String dartEntry) =>
+      path.relative(dartEntry, from: path.dirname(_htmlEntryPoint));
 }
 
 class _BootstrapFileBuilder {

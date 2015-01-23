@@ -53,9 +53,11 @@ During development a mirror based system is used to find and run the initializer
 but for deployment there is a transformer which can replace that with a static list
 of initializers to be ran. 
 
-This transformer does not modify your existing files, but instead creates a new
-entrypoint which bootstraps your existing app. Below is an example pubspec with the
-transformer:
+This will create a new entry point which bootstraps your existing app. If you
+supply an `htmlEntryPoint` then any script tags whose src is the same as
+`entryPoint` will be rewritten to the bootstrapped file `newEntryPoint`.
+
+Below is an example pubspec with the transformer:
 
     name: my_app
     dependencies:
@@ -64,10 +66,7 @@ transformer:
     - initialize:
         entryPoint: web/index.dart
         newEntryPoint: web/index.bootstrap.dart
-
-**Note**: Until https://github.com/dart-lang/initialize/issues/10 is resolved, it
-is necessary to rewrite any script tags pointing to your entry point to the new
-bootstrapped entry point manually.
+        htmlEntryPoint: web/index.html
 
 ## Creating your own initializer
 
