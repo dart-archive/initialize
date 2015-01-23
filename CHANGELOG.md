@@ -7,6 +7,11 @@
 for any script tag whose src is `entry_point` and rewrite it to point at the
 bootstrapped file `new_entry_point`.
 
+* Top level properties and static class properties are now supported in
+initializer constructors, as well as List and Map literals,
+[5](https://github.com/dart-lang/initialize/issues/5).
+
+
 ## 0.1.0+1
 
 Quick fix for the transformer on windows.

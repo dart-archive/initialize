@@ -13,94 +13,134 @@ main() {
   var transformer = new InitializeTransformer(
       'web/index.dart', 'web/index.bootstrap.dart', 'web/index.html');
 
-  testPhases('transformer', [[transformer]], {
+  testPhases('basic', [[transformer]], {
     'a|web/index.html': '''
-          <html><head></head><body>
-            <script type="application/dart" src="index.dart"></script>
-          </body></html>
-          '''.replaceAll('          ', ''),
+        <html><head></head><body>
+          <script type="application/dart" src="index.dart"></script>
+        </body></html>
+        '''.replaceAll('        ', ''),
     'a|web/index.dart': '''
-          library web_foo;
+        library web_foo;
 
-          import 'foo.dart';
-          ''',
+        import 'foo.dart';
+        ''',
     'a|web/foo.dart': '''
-          @constInit
-          library foo;
+        @constInit
+        library foo;
 
-          import 'package:initialize/initialize.dart';
-          import 'package:bar/bar.dart';
+        import 'package:initialize/initialize.dart';
+        import 'package:test_initializers/common.dart';
+        import 'package:bar/bar.dart';
 
-          @constInit
-          class Foo extends Bar {}
+        @constInit
+        class Foo extends Bar {}
 
-          @initMethod
-          foo() {}
-          ''',
+        @initMethod
+        foo() {}
+        ''',
     'bar|lib/bar.dart': '''
-          @DynamicInit('bar')
-          @DynamicInit('bar2')
-          library bar;
+        @DynamicInit('bar')
+        @DynamicInit('bar2')
+        library bar;
 
-          import 'package:initialize/initialize.dart';
+        import 'package:initialize/initialize.dart';
+        import 'package:test_initializers/common.dart';
 
-          @DynamicInit('Bar')
-          @DynamicInit('Bar2')
-          class Bar {}
+        @DynamicInit('Bar')
+        @DynamicInit('Bar2')
+        class Bar {}
 
-          @DynamicInit('bar()')
-          @initMethod
-          bar() {}
-          ''',
+        @DynamicInit('bar()')
+        @initMethod
+        bar() {}
+        ''',
     // Mock out the Initialize package plus some initializers.
-    'initialize|lib/initialize.dart': '''
-          library initialize;
-
-          abstract class Initializer<T> {}
-
-          class _ConstInit extends Initializer<dynamic> {
-            const ConstInit();
-          }
-          const _ConstInit constInit = const _ConstInit();
-
-          class DynamicInit extends Initializer<dynamic> {
-            final String _name;
-            const DynamicInit(this._name);
-          }
-
-          class _InitMethod implements Initializer<Function> {
-            const _InitMethod();
-          }
-          const _InitMethod initMethod = const _InitMethod();
-          ''',
+    'initialize|lib/initialize.dart': mockInitialize,
+    'test_initializers|lib/common.dart': commonInitializers,
   }, {
     'a|web/index.html': '''
-          <html><head></head><body>
-            <script type="application/dart" src="index.bootstrap.dart"></script>
+        <html><head></head><body>
+          <script type="application/dart" src="index.bootstrap.dart"></script>
 
-          </body></html>'''.replaceAll('          ', ''),
+        </body></html>'''.replaceAll('        ', ''),
     'a|web/index.bootstrap.dart': '''
-          import 'package:initialize/src/static_loader.dart';
-          import 'index.dart' as i0;
-          import 'package:bar/bar.dart' as i1;
-          import 'package:initialize/initialize.dart' as i2;
-          import 'foo.dart' as i3;
+        import 'package:initialize/src/static_loader.dart';
+        import 'index.dart' as i0;
+        import 'package:bar/bar.dart' as i1;
+        import 'package:test_initializers/common.dart' as i2;
+        import 'package:initialize/initialize.dart' as i3;
+        import 'foo.dart' as i4;
 
-          main() {
-            initializers.addAll([
-              new InitEntry(const i2.DynamicInit('bar'), #bar),
-              new InitEntry(const i2.DynamicInit('bar2'), #bar),
-              new InitEntry(const i2.DynamicInit('bar()'), i1.bar),
-              new InitEntry(i2.initMethod, i1.bar),
-              new InitEntry(const i2.DynamicInit('Bar'), i1.Bar),
-              new InitEntry(const i2.DynamicInit('Bar2'), i1.Bar),
-              new InitEntry(i2.constInit, #foo),
-              new InitEntry(i2.initMethod, i3.foo),
-              new InitEntry(i2.constInit, i3.Foo),
-            ]);
+        main() {
+          initializers.addAll([
+            new InitEntry(const i2.DynamicInit('bar'), #bar),
+            new InitEntry(const i2.DynamicInit('bar2'), #bar),
+            new InitEntry(const i2.DynamicInit('bar()'), i1.bar),
+            new InitEntry(i3.initMethod, i1.bar),
+            new InitEntry(const i2.DynamicInit('Bar'), i1.Bar),
+            new InitEntry(const i2.DynamicInit('Bar2'), i1.Bar),
+            new InitEntry(i2.constInit, #foo),
+            new InitEntry(i3.initMethod, i4.foo),
+            new InitEntry(i2.constInit, i4.Foo),
+          ]);
 
-            i0.main();
-          }
-          '''.replaceAll('          ', ''),
+          i0.main();
+        }
+        '''.replaceAll('        ', '')
+  });
+
+  testPhases('constructor arguments', [[transformer]], {
+    'a|web/index.dart': '''
+        @DynamicInit(foo)
+        @DynamicInit(Foo.foo)
+        @DynamicInit(const [foo, Foo.foo, 'foo'])
+        @DynamicInit(const {'foo': foo, 'Foo.foo': Foo.foo, 'bar': 'bar'})
+        @DynamicInit('foo')
+        @DynamicInit(true)
+        @DynamicInit(null)
+        @DynamicInit(1)
+        @DynamicInit(1.1)
+        @NamedArgInit(1, name: 'Bill')
+        library web_foo;
+
+        import 'package:test_initializers/common.dart';
+        import 'foo.dart';
+        ''',
+    'a|web/foo.dart': '''
+        library foo;
+
+        const String foo = 'foo';
+
+        class Foo {
+          static foo = 'Foo.foo';
+        }
+        ''',
+    // Mock out the Initialize package plus some initializers.
+    'initialize|lib/initialize.dart': mockInitialize,
+    'test_initializers|lib/common.dart': commonInitializers,
+  }, {
+    'a|web/index.bootstrap.dart': '''
+        import 'package:initialize/src/static_loader.dart';
+        import 'index.dart' as i0;
+        import 'package:test_initializers/common.dart' as i1;
+        import 'foo.dart' as i2;
+
+        main() {
+          initializers.addAll([
+            new InitEntry(const i1.DynamicInit(i2.foo), #web_foo),
+            new InitEntry(const i1.DynamicInit(i2.Foo.foo), #web_foo),
+            new InitEntry(const i1.DynamicInit(const [i2.foo, i2.Foo.foo, 'foo']), #web_foo),
+            new InitEntry(const i1.DynamicInit(const {'foo': i2.foo, 'Foo.foo': i2.Foo.foo, 'bar': 'bar'}), #web_foo),
+            new InitEntry(const i1.DynamicInit('foo'), #web_foo),
+            new InitEntry(const i1.DynamicInit(true), #web_foo),
+            new InitEntry(const i1.DynamicInit(null), #web_foo),
+            new InitEntry(const i1.DynamicInit(1), #web_foo),
+            new InitEntry(const i1.DynamicInit(1.1), #web_foo),
+            new InitEntry(const i1.NamedArgInit(1, name: 'Bill'), #web_foo),
+          ]);
+
+          i0.main();
+        }
+        '''.replaceAll('        ', '')
   });
 }

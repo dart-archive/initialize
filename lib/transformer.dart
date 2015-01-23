@@ -93,10 +93,11 @@ class InitializeTransformer extends Transformer {
         transform.logger
             .error('New entry point file $newEntryPointId already exists.');
       } else {
-        return _resolvers
-            .get(transform)
-            .then((resolver) => new _BootstrapFileBuilder(resolver, transform,
-                transform.primaryInput.id, newEntryPointId).run());
+        return _resolvers.get(transform).then((resolver) {
+          new _BootstrapFileBuilder(resolver, transform,
+              transform.primaryInput.id, newEntryPointId).run();
+          resolver.release();
+        });
       }
     });
   }
@@ -244,19 +245,23 @@ class _BootstrapFileBuilder {
     // Import the static_loader and original entry point.
     importsBuffer
         .writeln("import 'package:initialize/src/static_loader.dart';");
-    _maybeWriteImport(entryLib, libraryPrefixes, importsBuffer);
+    libraryPrefixes[entryLib] = 'i0';
 
     initializersBuffer.writeln('  initializers.addAll([');
     while (_initQueue.isNotEmpty) {
       var next = _initQueue.removeFirst();
 
-      _maybeWriteImport(next.element.library, libraryPrefixes, importsBuffer);
-      _maybeWriteImport(
-          next.annotation.element.library, libraryPrefixes, importsBuffer);
+      libraryPrefixes.putIfAbsent(
+          next.element.library, () => 'i${libraryPrefixes.length}');
+      libraryPrefixes.putIfAbsent(
+          next.annotation.element.library, () => 'i${libraryPrefixes.length}');
 
       _writeInitializer(next, libraryPrefixes, initializersBuffer);
     }
     initializersBuffer.writeln('  ]);');
+
+    libraryPrefixes
+        .forEach((lib, prefix) => _writeImport(lib, prefix, importsBuffer));
 
     // TODO(jakemac): copyright and library declaration
     return '''
@@ -266,15 +271,6 @@ $initializersBuffer
   i0.main();
 }
 ''';
-  }
-
-  // Writes an import to library if it doesn't exist yet if libraries.
-  _maybeWriteImport(LibraryElement library,
-      Map<LibraryElement, String> libraries, StringBuffer buffer) {
-    if (libraries.containsKey(library)) return;
-    var prefix = 'i${libraries.length}';
-    libraries[library] = prefix;
-    _writeImport(library, prefix, buffer);
   }
 
   _writeImport(LibraryElement lib, String prefix, StringBuffer buffer) {
@@ -333,7 +329,7 @@ $initializersBuffer
           : '.${annotation.constructorName}';
       // TODO(jakemac): Support more than raw values here
       // https://github.com/dart-lang/static_init/issues/5
-      final args = annotation.arguments;
+      final args = _buildArgsString(annotation.arguments, libraryPrefixes);
       buffer.write('''
     new InitEntry(const $metaPrefix.${clazz}$constructor$args, $elementString),
 ''');
@@ -341,7 +337,97 @@ $initializersBuffer
       buffer.write('''
     new InitEntry($metaPrefix.${annotationElement.name}, $elementString),
 ''');
+    } else {
+      _logger.error('Unsupported annotation type. Only constructors and '
+          'properties are supported as initializers.');
     }
+  }
+
+  String _buildArgsString(
+      ArgumentList args, Map<LibraryElement, String> libraryPrefixes) {
+    var buffer = new StringBuffer();
+    buffer.write('(');
+    var first = true;
+    for (var arg in args.arguments) {
+      if (!first) buffer.write(', ');
+      first = false;
+
+      Expression expression;
+      if (arg is NamedExpression) {
+        buffer.write('${arg.name.label.name}: ');
+        expression = arg.expression;
+      } else {
+        expression = arg;
+      }
+
+      buffer.write(_expressionString(expression, libraryPrefixes));
+    }
+    buffer.write(')');
+    return buffer.toString();
+  }
+
+  String _expressionString(
+      Expression expression, Map<LibraryElement, String> libraryPrefixes) {
+    var buffer = new StringBuffer();
+    if (expression is StringLiteral) {
+      var value = expression.stringValue;
+      if (value == null) {
+        _logger.error('Only const strings are allowed in initializer '
+            'expressions, found $expression');
+      }
+      value = value.replaceAll(r'\', r'\\').replaceAll(r"'", r"\'");
+      buffer.write("'$value'");
+    } else if (expression is BooleanLiteral ||
+        expression is DoubleLiteral ||
+        expression is IntegerLiteral ||
+        expression is NullLiteral) {
+      buffer.write('${expression}');
+    } else if (expression is ListLiteral) {
+      buffer.write('const [');
+      var first = true;
+      for (Expression listExpression in expression.elements) {
+        if (!first) buffer.write(', ');
+        first = false;
+        buffer.write(_expressionString(listExpression, libraryPrefixes));
+      }
+      buffer.write(']');
+    } else if (expression is MapLiteral) {
+      buffer.write('const {');
+      var first = true;
+      for (MapLiteralEntry entry in expression.entries) {
+        if (!first) buffer.write(', ');
+        first = false;
+        buffer.write(_expressionString(entry.key, libraryPrefixes));
+        buffer.write(': ');
+        buffer.write(_expressionString(entry.value, libraryPrefixes));
+      }
+      buffer.write('}');
+    } else if (expression is Identifier) {
+      var element = expression.bestElement;
+      if (element == null || !element.isPublic) {
+        _logger.error('Private constants are not supported in intializer '
+            'constructors, found $element.');
+      }
+      libraryPrefixes.putIfAbsent(
+          element.library, () => 'i${libraryPrefixes.length}');
+
+      buffer.write('${libraryPrefixes[element.library]}.');
+      if (element is ClassElement) {
+        buffer.write(element.name);
+      } else if (element is PropertyAccessorElement) {
+        var variable = element.variable;
+        if (variable is FieldElement) {
+          buffer.write('${variable.enclosingElement.name}.');
+        }
+        buffer.write('${variable.name}');
+      } else {
+        _logger.error('Unsupported argument to initializer constructor.');
+      }
+    } else {
+      _logger.error('Only literals and identifiers are allowed for initializer '
+          'expressions, found $expression.');
+    }
+    return buffer.toString();
   }
 
   bool _isInitializer(InterfaceType type) {

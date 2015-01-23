@@ -15,3 +15,37 @@ testPhases(String testName, List<List<Transformer>> phases,
     return helper.checkAll(expectedFiles).whenComplete(() => helper.tearDown());
   });
 }
+
+// Simple mock of initialize.
+const mockInitialize = '''
+    library initialize;
+
+    abstract class Initializer<T> {}
+
+    class _InitMethod implements Initializer<Function> {
+      const _InitMethod();
+    }
+    const _InitMethod initMethod = const _InitMethod();''';
+
+// Some simple initializers for use in tests.
+const commonInitializers = '''
+    library test_initializers;
+
+    import 'package:initialize/initialize.dart';
+
+    class _ConstInit extends Initializer<dynamic> {
+      const ConstInit();
+    }
+    const _ConstInit constInit = const _ConstInit();
+
+    class DynamicInit extends Initializer<dynamic> {
+      final dynamic _value;
+      const DynamicInit(this._value);
+    }
+
+    class NamedArgInit extends Initializer<dynamic> {
+      final dynamic _first;
+      final dynamic name;
+      const NamedArgInit(this._first, {this.name});
+    }
+    ''';
