@@ -1,4 +1,4 @@
-## 0.2.0-dev
+## 0.2.0
 
 * `entryPoint` and `newEntryPoint` transformer options were renamed to
 `entry_point` and `new_entry_pont`.
