@@ -1,4 +1,4 @@
-## 0.1.1
+## 0.1.1-dev
 
 Added `htmlEntryPoint` option to the transformer. This will search that file for
 any script tag whose src is `entryPoint` and rewrite it to point at the
