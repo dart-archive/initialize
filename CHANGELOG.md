@@ -1,3 +1,9 @@
+## 0.3.0-dev
+
+* Library initializers now pass a `LibraryIdentifier` to `initialize` instead of
+just a `Symbol`. This provides the package, and path to the library in addition
+to the symbol so that paths can be normalized.
+
 ## 0.2.0
 
 * `entryPoint` and `newEntryPoint` transformer options were renamed to

@@ -242,9 +242,10 @@ class _BootstrapFileBuilder {
     var initializersBuffer = new StringBuffer();
     var libraryPrefixes = new Map<LibraryElement, String>();
 
-    // Import the static_loader and original entry point.
+    // Import the static_loader, initializer, and original entry point.
     importsBuffer
         .writeln("import 'package:initialize/src/static_loader.dart';");
+    importsBuffer.writeln("import 'package:initialize/src/initializer.dart';");
     libraryPrefixes[entryLib] = 'i0';
 
     initializersBuffer.writeln('  initializers.addAll([');
@@ -300,7 +301,27 @@ $initializersBuffer
     final metaPrefix = libraryPrefixes[annotationElement.library];
     var elementString;
     if (element is LibraryElement) {
-      elementString = '#${element.name}';
+      var segments = element.source.uri.pathSegments;
+      var package = segments[0];
+      var libraryPath;
+      var packageString;
+      if (_newEntryPoint.package == package &&
+          _newEntryPoint.path.startsWith('${segments[1]}/')) {
+        // reset `package` to null, we will do a relative path in this case.
+        packageString = 'null';
+        libraryPath = path.url.relative(
+            path.url.joinAll(segments.getRange(1, segments.length)),
+            from: path.url.dirname(path.url.join(_newEntryPoint.path)));
+      } else if (segments[1] == 'lib') {
+        packageString = "'$package'";
+        libraryPath = path.url.joinAll(segments.getRange(2, segments.length));
+      } else {
+        _logger.error('Unable to import `${element.source.uri.path}` from '
+            '${_newEntryPoint.path}.');
+      }
+
+      elementString = "const LibraryIdentifier("
+          "#${element.name}, $packageString, '$libraryPath')";
     } else if (element is ClassElement || element is FunctionElement) {
       elementString =
           '${libraryPrefixes[data.element.library]}.${element.name}';

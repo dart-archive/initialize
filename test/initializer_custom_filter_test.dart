@@ -7,7 +7,7 @@ import 'dart:async';
 import 'package:initialize/initialize.dart';
 import 'package:unittest/unittest.dart';
 import 'package:unittest/compact_vm_config.dart';
-import 'initialize_tracker.dart';
+import 'package:initialize/src/initialize_tracker.dart';
 
 main() {
   useCompactVMConfiguration();

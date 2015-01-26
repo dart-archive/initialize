@@ -1,0 +1,10 @@
+name: initialize_test_fixtures
+version: 0.1.0
+author: Polymer.dart Authors <web@dartlang.org>
+description: Some fixtures for testing the initialize package
+homepage: https://github.com/dart-lang/initialize
+dependencies:
+  initialize:
+    path: ../
+environment:
+  sdk: '>=1.4.0 <2.0.0'

@@ -26,3 +26,23 @@ abstract class Initializer<T> {
 
 /// Typedef for a custom filter function.
 typedef bool InitializerFilter(Initializer initializer);
+
+/// When annotating libraries, this is passed to the initializer.
+class LibraryIdentifier {
+  // The qualified name of the library.
+  final Symbol name;
+
+  // The package this library lives in. May be null if its the same as the root
+  // package.
+  final String package;
+
+  // The path to the library.
+  final String path;
+
+  const LibraryIdentifier(this.name, this.package, this.path);
+
+  bool operator ==(LibraryIdentifier other) =>
+      name == other.name && package == other.package && path == other.path;
+
+  String toString() => '$name: $package:$path';
+}

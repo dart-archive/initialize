@@ -145,7 +145,22 @@ class InitializationCrawler {
         annotatedValue = (declaration.owner as ObjectMirror)
             .getField(declaration.simpleName).reflectee;
       } else if (declaration is LibraryMirror) {
-        annotatedValue = declaration.qualifiedName;
+        var package;
+        var filePath;
+        Uri uri = declaration.uri;
+        if (uri.scheme == 'file') {
+          filePath = path.url.relative(
+              uri.path, from: path.url.dirname(_root.uri.path));
+        } else if (uri.scheme == 'package') {
+          var segments = uri.pathSegments;
+          package = segments[0];
+          filePath = path.url.joinAll(segments.getRange(1, segments.length));
+        } else {
+          throw new UnsupportedError('Unsupported uri scheme ${uri.scheme} for '
+              'library ${declaration}.');
+        }
+        annotatedValue =
+            new LibraryIdentifier(declaration.qualifiedName, package, filePath);
       } else {
         throw _UNSUPPORTED_DECLARATION;
       }

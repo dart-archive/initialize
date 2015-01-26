@@ -4,7 +4,7 @@
 @initializeTracker
 library initialize.test.foo;
 
-import 'initialize_tracker.dart';
+import 'package:initialize/src/initialize_tracker.dart';
 
 @initializeTracker
 class Foo {}
