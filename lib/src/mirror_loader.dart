@@ -148,7 +148,7 @@ class InitializationCrawler {
         var package;
         var filePath;
         Uri uri = declaration.uri;
-        if (uri.scheme == 'file') {
+        if (uri.scheme == 'file' || uri.scheme.startsWith('http')) {
           filePath = path.url.relative(
               uri.path, from: path.url.dirname(_root.uri.path));
         } else if (uri.scheme == 'package') {
