@@ -245,7 +245,7 @@ class _BootstrapFileBuilder {
     // Import the static_loader, initializer, and original entry point.
     importsBuffer
         .writeln("import 'package:initialize/src/static_loader.dart';");
-    importsBuffer.writeln("import 'package:initialize/src/initializer.dart';");
+    importsBuffer.writeln("import 'package:initialize/initialize.dart';");
     libraryPrefixes[entryLib] = 'i0';
 
     initializersBuffer.writeln('  initializers.addAll([');

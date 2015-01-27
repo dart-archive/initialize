@@ -72,7 +72,7 @@ main() {
         </body></html>'''.replaceAll('        ', ''),
     'a|web/index.bootstrap.dart': '''
         import 'package:initialize/src/static_loader.dart';
-        import 'package:initialize/src/initializer.dart';
+        import 'package:initialize/initialize.dart';
         import 'index.dart' as i0;
         import 'package:bar/baz.dart' as i1;
         import 'package:test_initializers/common.dart' as i2;
@@ -131,7 +131,7 @@ main() {
   }, {
     'a|web/index.bootstrap.dart': '''
         import 'package:initialize/src/static_loader.dart';
-        import 'package:initialize/src/initializer.dart';
+        import 'package:initialize/initialize.dart';
         import 'index.dart' as i0;
         import 'package:test_initializers/common.dart' as i1;
         import 'foo.dart' as i2;
