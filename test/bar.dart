@@ -5,7 +5,7 @@
 library initialize.test.bar;
 
 import 'foo.dart';
-import 'initialize_tracker.dart';
+import 'package:initialize/src/initialize_tracker.dart';
 
 // Foo should be initialized first.
 @initializeTracker

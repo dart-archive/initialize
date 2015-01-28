@@ -3,7 +3,7 @@
 // BSD-style license that can be found in the LICENSE file.
 library initialize.test.cycle_a;
 
-import 'initialize_tracker.dart';
+import 'package:initialize/src/initialize_tracker.dart';
 import 'cycle_b.dart';
 
 @initializeTracker

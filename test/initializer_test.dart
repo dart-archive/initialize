@@ -6,8 +6,9 @@ library initialize.initializer_test;
 
 import 'foo.dart';
 import 'bar.dart';
-import 'initialize_tracker.dart';
+import 'package:initialize/src/initialize_tracker.dart';
 import 'package:initialize/initialize.dart';
+import 'package:test_package/foo.dart';
 import 'package:unittest/unittest.dart';
 import 'package:unittest/compact_vm_config.dart';
 
@@ -18,14 +19,17 @@ main() {
   run().then((_) {
     test('annotations are seen in post-order with superclasses first', () {
       var expectedNames = [
-        #initialize.test.foo,
+        const LibraryIdentifier(#test_package.bar, 'test_package', 'bar.dart'),
+        const LibraryIdentifier(#test_package.foo, 'test_package','foo.dart'),
+        const LibraryIdentifier(#initialize.test.foo, null, 'foo.dart'),
         foo,
         fooBar,
         Foo,
-        #initialize.test.bar,
+        const LibraryIdentifier(#initialize.test.bar, null, 'bar.dart'),
         bar,
         Bar,
-        #initialize.initializer_test,
+        const LibraryIdentifier(
+            #initialize.initializer_test, null, 'initializer_test.dart'),
         zap,
         Zoop, // Zap extends Zoop, so Zoop comes first.
         Zap

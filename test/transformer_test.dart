@@ -45,6 +45,7 @@ main() {
 
         import 'package:initialize/initialize.dart';
         import 'package:test_initializers/common.dart';
+        import 'baz.dart';
 
         @DynamicInit('Bar')
         @DynamicInit('Bar2')
@@ -53,6 +54,12 @@ main() {
         @DynamicInit('bar()')
         @initMethod
         bar() {}
+        ''',
+    'bar|lib/baz.dart': '''
+        @constInit
+        library baz;
+
+        import 'package:test_initializers/common.dart';
         ''',
     // Mock out the Initialize package plus some initializers.
     'initialize|lib/initialize.dart': mockInitialize,
@@ -65,29 +72,32 @@ main() {
         </body></html>'''.replaceAll('        ', ''),
     'a|web/index.bootstrap.dart': '''
         import 'package:initialize/src/static_loader.dart';
+        import 'package:initialize/initialize.dart';
         import 'index.dart' as i0;
-        import 'package:bar/bar.dart' as i1;
+        import 'package:bar/baz.dart' as i1;
         import 'package:test_initializers/common.dart' as i2;
-        import 'package:initialize/initialize.dart' as i3;
-        import 'foo.dart' as i4;
+        import 'package:bar/bar.dart' as i3;
+        import 'package:initialize/initialize.dart' as i4;
+        import 'foo.dart' as i5;
 
         main() {
           initializers.addAll([
-            new InitEntry(const i2.DynamicInit('bar'), #bar),
-            new InitEntry(const i2.DynamicInit('bar2'), #bar),
-            new InitEntry(const i2.DynamicInit('bar()'), i1.bar),
-            new InitEntry(i3.initMethod, i1.bar),
-            new InitEntry(const i2.DynamicInit('Bar'), i1.Bar),
-            new InitEntry(const i2.DynamicInit('Bar2'), i1.Bar),
-            new InitEntry(i2.constInit, #foo),
-            new InitEntry(i3.initMethod, i4.foo),
-            new InitEntry(i2.constInit, i4.Foo),
+            new InitEntry(i2.constInit, const LibraryIdentifier(#baz, 'bar', 'baz.dart')),
+            new InitEntry(const i2.DynamicInit('bar'), const LibraryIdentifier(#bar, 'bar', 'bar.dart')),
+            new InitEntry(const i2.DynamicInit('bar2'), const LibraryIdentifier(#bar, 'bar', 'bar.dart')),
+            new InitEntry(const i2.DynamicInit('bar()'), i3.bar),
+            new InitEntry(i4.initMethod, i3.bar),
+            new InitEntry(const i2.DynamicInit('Bar'), i3.Bar),
+            new InitEntry(const i2.DynamicInit('Bar2'), i3.Bar),
+            new InitEntry(i2.constInit, const LibraryIdentifier(#foo, null, 'foo.dart')),
+            new InitEntry(i4.initMethod, i5.foo),
+            new InitEntry(i2.constInit, i5.Foo),
           ]);
 
           i0.main();
         }
         '''.replaceAll('        ', '')
-  });
+  }, []);
 
   testPhases('constructor arguments', [[transformer]], {
     'a|web/index.dart': '''
@@ -121,26 +131,27 @@ main() {
   }, {
     'a|web/index.bootstrap.dart': '''
         import 'package:initialize/src/static_loader.dart';
+        import 'package:initialize/initialize.dart';
         import 'index.dart' as i0;
         import 'package:test_initializers/common.dart' as i1;
         import 'foo.dart' as i2;
 
         main() {
           initializers.addAll([
-            new InitEntry(const i1.DynamicInit(i2.foo), #web_foo),
-            new InitEntry(const i1.DynamicInit(i2.Foo.foo), #web_foo),
-            new InitEntry(const i1.DynamicInit(const [i2.foo, i2.Foo.foo, 'foo']), #web_foo),
-            new InitEntry(const i1.DynamicInit(const {'foo': i2.foo, 'Foo.foo': i2.Foo.foo, 'bar': 'bar'}), #web_foo),
-            new InitEntry(const i1.DynamicInit('foo'), #web_foo),
-            new InitEntry(const i1.DynamicInit(true), #web_foo),
-            new InitEntry(const i1.DynamicInit(null), #web_foo),
-            new InitEntry(const i1.DynamicInit(1), #web_foo),
-            new InitEntry(const i1.DynamicInit(1.1), #web_foo),
-            new InitEntry(const i1.NamedArgInit(1, name: 'Bill'), #web_foo),
+            new InitEntry(const i1.DynamicInit(i2.foo), const LibraryIdentifier(#web_foo, null, 'index.dart')),
+            new InitEntry(const i1.DynamicInit(i2.Foo.foo), const LibraryIdentifier(#web_foo, null, 'index.dart')),
+            new InitEntry(const i1.DynamicInit(const [i2.foo, i2.Foo.foo, 'foo']), const LibraryIdentifier(#web_foo, null, 'index.dart')),
+            new InitEntry(const i1.DynamicInit(const {'foo': i2.foo, 'Foo.foo': i2.Foo.foo, 'bar': 'bar'}), const LibraryIdentifier(#web_foo, null, 'index.dart')),
+            new InitEntry(const i1.DynamicInit('foo'), const LibraryIdentifier(#web_foo, null, 'index.dart')),
+            new InitEntry(const i1.DynamicInit(true), const LibraryIdentifier(#web_foo, null, 'index.dart')),
+            new InitEntry(const i1.DynamicInit(null), const LibraryIdentifier(#web_foo, null, 'index.dart')),
+            new InitEntry(const i1.DynamicInit(1), const LibraryIdentifier(#web_foo, null, 'index.dart')),
+            new InitEntry(const i1.DynamicInit(1.1), const LibraryIdentifier(#web_foo, null, 'index.dart')),
+            new InitEntry(const i1.NamedArgInit(1, name: 'Bill'), const LibraryIdentifier(#web_foo, null, 'index.dart')),
           ]);
 
           i0.main();
         }
         '''.replaceAll('        ', '')
-  });
+  }, []);
 }
