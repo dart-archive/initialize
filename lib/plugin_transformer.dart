@@ -29,6 +29,7 @@ abstract class InitializePluginTransformer extends AggregateTransformer {
 
   Future apply(AggregateTransform transform) {
     _logger = transform.logger;
+    var done = new Completer();
     var listener = transform.primaryInputs.listen((Asset asset) {
       allAssets.add(asset);
       var id = asset.id;
@@ -59,11 +60,12 @@ abstract class InitializePluginTransformer extends AggregateTransformer {
           printer.build(url);
           transform.addOutput(new Asset.fromString(id, printer.text));
         }
+        done.complete();
       });
     });
 
     // Make sure all the assets are read before returning.
-    return listener.asFuture();
+    return Future.wait([listener.asFuture(), done.future]);
   }
 
   /// Gets called once for each generated [InitEntry] expression in the

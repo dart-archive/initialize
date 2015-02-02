@@ -1,4 +1,4 @@
-## 0.3.1-dev
+## 0.3.1
 
 * Added `InitializePluginTransformer` class in `plugin_transformer.dart` which
 provides a base transformer class which can be extended to perform custom
