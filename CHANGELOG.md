@@ -1,3 +1,11 @@
+## 0.3.1-dev
+
+* Added `InitializePluginTransformer` class in `plugin_transformer.dart` which
+provides a base transformer class which can be extended to perform custom
+transformations for annotations. These transformers should be included after the
+main `initialize` transformer and work by parsing the bootstrap file so the
+program doesn't need to be re-analyzed.
+
 ## 0.3.0
 
 * Library initializers now pass a `LibraryIdentifier` to `initialize` instead of

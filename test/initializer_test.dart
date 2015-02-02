@@ -20,7 +20,7 @@ main() {
     test('annotations are seen in post-order with superclasses first', () {
       var expectedNames = [
         const LibraryIdentifier(#test_package.bar, 'test_package', 'bar.dart'),
-        const LibraryIdentifier(#test_package.foo, 'test_package','foo.dart'),
+        const LibraryIdentifier(#test_package.foo, 'test_package', 'foo.dart'),
         const LibraryIdentifier(#initialize.test.foo, null, 'foo.dart'),
         foo,
         fooBar,
