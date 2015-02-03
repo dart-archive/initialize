@@ -54,8 +54,8 @@ but for deployment there is a transformer which can replace that with a static l
 of initializers to be ran. 
 
 This will create a new entry point which bootstraps your existing app. If you
-supply an `htmlEntryPoint` then any script tags whose src is the same as
-`entryPoint` will be rewritten to the bootstrapped file `newEntryPoint`.
+supply an `html_entry_point` then any script tags whose src is the same as
+`entry_point` will be rewritten to the bootstrapped file `new_entry_point`.
 
 Below is an example pubspec with the transformer:
 
@@ -64,9 +64,9 @@ Below is an example pubspec with the transformer:
       initialize: any
     transformers:
     - initialize:
-        entryPoint: web/index.dart
-        newEntryPoint: web/index.bootstrap.dart
-        htmlEntryPoint: web/index.html
+        entry_point: web/index.dart
+        new_entry_point: web/index.bootstrap.dart
+        html_entry_point: web/index.html
 
 ## Creating your own initializer
 
