@@ -8,7 +8,9 @@ import 'dart:collection' show Queue;
 import 'package:analyzer/src/generated/ast.dart';
 import 'package:analyzer/src/generated/element.dart';
 import 'package:barback/barback.dart';
+import 'package:code_transformers/assets.dart';
 import 'package:code_transformers/resolver.dart';
+import 'package:glob/glob.dart';
 import 'package:html5lib/dom.dart' as dom;
 import 'package:html5lib/parser.dart' show parse;
 import 'package:path/path.dart' as path;
@@ -17,18 +19,18 @@ import 'package:path/path.dart' as path;
 /// logic.
 class InitializeTransformer extends Transformer {
   final Resolvers _resolvers;
-  final String _entryPoint;
-  final String _newEntryPoint;
-  final String _htmlEntryPoint;
+  final Iterable<Glob> _entryPointGlobs;
+  final bool _errorIfNotFound;
 
-  InitializeTransformer(
-      this._entryPoint, this._newEntryPoint, this._htmlEntryPoint)
-      : _resolvers = new Resolvers.fromMock({
-        // The list of types below is derived from:
-        //   * types that are used internally by the resolver (see
-        //   _initializeFrom in resolver.dart).
-        // TODO(jakemac): Move this into code_transformers so it can be shared.
-        'dart:core': '''
+  InitializeTransformer(List<String> entryPoints, {bool errorIfNotFound: true})
+      : _entryPointGlobs = entryPoints.map((e) => new Glob(e)),
+        _errorIfNotFound = errorIfNotFound,
+        _resolvers = new Resolvers.fromMock({
+          // The list of types below is derived from:
+          //   * types that are used internally by the resolver (see
+          //   _initializeFrom in resolver.dart).
+          // TODO(jakemac): Move this into code_transformers so it can be shared.
+          'dart:core': '''
             library dart.core;
             class Object {}
             class Function {}
@@ -57,96 +59,109 @@ class InitializeTransformer extends Transformer {
             class List<V> extends Object {}
             class Map<K, V> extends Object {}
             ''',
-        'dart:html': '''
+          'dart:html': '''
             library dart.html;
             class HtmlElement {}
             ''',
-      });
+        });
 
-  factory InitializeTransformer.asPlugin(BarbackSettings settings) {
-    var entryPoint = settings.configuration['entry_point'];
-    var newEntryPoint = settings.configuration['new_entry_point'];
-    if (newEntryPoint == null) {
-      newEntryPoint = entryPoint.replaceFirst('.dart', '.bootstrap.dart');
-    }
-    var htmlEntryPoint = settings.configuration['html_entry_point'];
-    return new InitializeTransformer(entryPoint, newEntryPoint, htmlEntryPoint);
-  }
+  factory InitializeTransformer.asPlugin(BarbackSettings settings) =>
+      new InitializeTransformer(_readFileList(settings, 'entry_points'));
 
-  bool isPrimary(AssetId id) =>
-      _entryPoint == id.path || _htmlEntryPoint == id.path;
+  bool isPrimary(AssetId id) => _entryPointGlobs.any((g) => g.matches(id.path));
 
   Future apply(Transform transform) {
-    if (transform.primaryInput.id.path == _entryPoint) {
+    if (transform.primaryInput.id.path.endsWith('.dart')) {
       return _buildBootstrapFile(transform);
-    } else if (transform.primaryInput.id.path == _htmlEntryPoint) {
-      return _replaceEntryWithBootstrap(transform);
+    } else if (transform.primaryInput.id.path.endsWith('.html')) {
+      return transform.primaryInput.readAsString().then((html) {
+        var document = parse(html);
+        var originalDartFile =
+            _findMainScript(document, transform.primaryInput.id, transform);
+        return _buildBootstrapFile(transform, primaryId: originalDartFile).then(
+            (AssetId newDartFile) {
+          return _replaceEntryWithBootstrap(transform, document,
+              transform.primaryInput.id, originalDartFile, newDartFile);
+        });
+      });
+    } else {
+      transform.logger.warning(
+          'Invalid entry point ${transform.primaryInput.id}. Must be either a '
+          '.dart or .html file.');
     }
-    return null;
+    return new Future.value();
   }
 
-  Future _buildBootstrapFile(Transform transform) {
-    var newEntryPointId =
-        new AssetId(transform.primaryInput.id.package, _newEntryPoint);
+  // Returns the AssetId of the newly created bootstrap file.
+  Future<AssetId> _buildBootstrapFile(Transform transform,
+      {AssetId primaryId}) {
+    if (primaryId == null) primaryId = transform.primaryInput.id;
+    var newEntryPointId = new AssetId(primaryId.package,
+        '${path.url.withoutExtension(primaryId.path)}.initialize.dart');
     return transform.hasInput(newEntryPointId).then((exists) {
       if (exists) {
         transform.logger
             .error('New entry point file $newEntryPointId already exists.');
-      } else {
-        return _resolvers.get(transform).then((resolver) {
-          new _BootstrapFileBuilder(resolver, transform,
-              transform.primaryInput.id, newEntryPointId).run();
-          resolver.release();
-        });
+        return null;
       }
+
+      return _resolvers.get(transform, [primaryId]).then((resolver) {
+        new _BootstrapFileBuilder(resolver, transform, primaryId,
+            newEntryPointId, _errorIfNotFound).run();
+        resolver.release();
+        return newEntryPointId;
+      });
     });
   }
 
-  Future _replaceEntryWithBootstrap(Transform transform) {
-    // For now at least, _htmlEntryPoint, _entryPoint, and _newEntryPoint need
-    // to be in the same folder.
-    // TODO(jakemac): support package urls with _entryPoint or _newEntryPoint
-    // in `lib`, and _htmlEntryPoint in another directory.
-    var _expectedDir = path.split(_htmlEntryPoint)[0];
-    if (_expectedDir != path.split(_entryPoint)[0] ||
-        _expectedDir != path.split(_newEntryPoint)[0]) {
+  // Replaces script tags pointing to [originalDartFile] with [newDartFile] in
+  // [entryPoint].
+  void _replaceEntryWithBootstrap(Transform transform, dom.Document document,
+      AssetId entryPoint, AssetId originalDartFile, AssetId newDartFile) {
+    var found = false;
+    var scripts = document
+        .querySelectorAll('script[type="application/dart"]')
+        .where((script) => uriToAssetId(entryPoint, script.attributes['src'],
+            transform.logger, script.sourceSpan) == originalDartFile)
+        .toList();
+
+    if (scripts.length != 1) {
       transform.logger.error(
-          'htmlEntryPoint, entryPoint, and newEntryPoint(if supplied) all must '
-          'be in the same top level directory.');
+          'Expected exactly one script pointing to $originalDartFile in '
+          '$entryPoint, but found ${scripts.length}.');
+      return;
+    }
+    scripts[0].attributes['src'] = path.url.relative(newDartFile.path,
+        from: path.dirname(entryPoint.path));
+    transform.addOutput(new Asset.fromString(entryPoint, document.outerHtml));
+  }
+
+  AssetId _findMainScript(
+      dom.Document document, AssetId entryPoint, Transform transform) {
+    var scripts = document.querySelectorAll('script[type="application/dart"]');
+    if (scripts.length != 1) {
+      transform.logger.error('Expected exactly one dart script in $entryPoint '
+          'but found ${scripts.length}.');
+      return null;
     }
 
-    return transform.primaryInput.readAsString().then((String html) {
-      var found = false;
-      var doc = parse(html);
-      var scripts = doc.querySelectorAll('script[type="application/dart"]');
-      for (dom.Element script in scripts) {
-        if (!_isEntryPointScript(script)) continue;
-        script.attributes['src'] = _relativeDartEntryPath(_newEntryPoint);
-        found = true;
-      }
-      if (!found) {
-        transform.logger.error(
-            'Unable to find script for $_entryPoint in $_htmlEntryPoint.');
-      }
-      return transform.addOutput(
-          new Asset.fromString(transform.primaryInput.id, doc.outerHtml));
-    });
+    var src = scripts[0].attributes['src'];
+    // TODO(jakemac): Support inline scripts,
+    // https://github.com/dart-lang/initialize/issues/20
+    if (src == null) {
+      transform.logger.error('Inline scripts are not supported at this time.');
+      return null;
+    }
+
+    return uriToAssetId(
+        entryPoint, src, transform.logger, scripts[0].sourceSpan);
   }
-
-  // Checks if the src of this script tag is pointing at `_entryPoint`.
-  bool _isEntryPointScript(dom.Element script) =>
-      path.normalize(script.attributes['src']) ==
-          _relativeDartEntryPath(_entryPoint);
-
-  // The relative path from `_htmlEntryPoint` to `dartEntry`. You must ensure
-  // that neither of these is null before calling this function.
-  String _relativeDartEntryPath(String dartEntry) =>
-      path.relative(dartEntry, from: path.dirname(_htmlEntryPoint));
 }
 
 class _BootstrapFileBuilder {
   final Resolver _resolver;
   final Transform _transform;
+  final bool _errorIfNotFound;
   AssetId _entryPoint;
   AssetId _newEntryPoint;
 
@@ -162,12 +177,18 @@ class _BootstrapFileBuilder {
 
   TransformLogger _logger;
 
-  _BootstrapFileBuilder(
-      this._resolver, this._transform, this._entryPoint, this._newEntryPoint) {
+  _BootstrapFileBuilder(this._resolver, this._transform, this._entryPoint,
+      this._newEntryPoint, this._errorIfNotFound) {
     _logger = _transform.logger;
     _initializeLibrary =
         _resolver.getLibrary(new AssetId('initialize', 'lib/initialize.dart'));
-    _initializer = _initializeLibrary.getType('Initializer');
+    if (_initializeLibrary != null) {
+      _initializer = _initializeLibrary.getType('Initializer');
+    } else if (_errorIfNotFound) {
+      _logger.warning('Unable to read "package:initialize/initialize.dart". '
+          'This file must be imported via $_entryPoint or a transitive '
+          'dependency.');
+    }
   }
 
   /// Adds the new entry point file to the transform. Should only be ran once.
@@ -452,6 +473,9 @@ $initializersBuffer
   }
 
   bool _isInitializer(InterfaceType type) {
+    // If `_initializer` wasn't found then it was never loaded (even
+    // transitively), and so no annotations can be initializers.
+    if (_initializer == null) return false;
     if (type == null) return false;
     if (type.element.type == _initializer.type) return true;
     if (_isInitializer(type.superclass)) return true;
@@ -543,4 +567,26 @@ class _InitializerData {
   final ElementAnnotation annotation;
 
   _InitializerData(this.element, this.annotation);
+}
+
+// Reads a file list from a barback settings configuration field.
+_readFileList(BarbackSettings settings, String field) {
+  var value = settings.configuration[field];
+  if (value == null) return null;
+  var files = [];
+  bool error;
+  if (value is List) {
+    files = value;
+    error = value.any((e) => e is! String);
+  } else if (value is String) {
+    files = [value];
+    error = false;
+  } else {
+    error = true;
+  }
+  if (error) {
+    print('Bad value for "$field" in the initialize transformer. '
+        'Expected either one String or a list of Strings.');
+  }
+  return files;
 }

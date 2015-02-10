@@ -21,7 +21,7 @@ completes before running the next initializer.
 
 ### @initMethod
 
-Ther is one initializer which comes with this package, `@initMethod`. Annotate
+There is one initializer which comes with this package, `@initMethod`. Annotate
 any top level function with this and it will be invoked automatically. For
 example, the program below will print `hello`:
 
@@ -51,11 +51,13 @@ so you should put the remainder of your program inside the chained then call.
 
 During development a mirror based system is used to find and run the initializers,
 but for deployment there is a transformer which can replace that with a static list
-of initializers to be ran. 
+of initializers to be ran.
 
-This will create a new entry point which bootstraps your existing app. If you
-supply an `html_entry_point` then any script tags whose src is the same as
-`entry_point` will be rewritten to the bootstrapped file `new_entry_point`.
+This will create a new entry point which bootstraps your existing app, this will
+have the same file name except `.dart` with be replaced with `.initialize.dart`.
+If you supply an html file to `entry_points` then it will bootstrap the dart
+script tag on that page and replace the `src` attribute to with the new
+bootstrap file.
 
 Below is an example pubspec with the transformer:
 
@@ -64,9 +66,7 @@ Below is an example pubspec with the transformer:
       initialize: any
     transformers:
     - initialize:
-        entry_point: web/index.dart
-        new_entry_point: web/index.bootstrap.dart
-        html_entry_point: web/index.html
+        entry_points: web/index.html
 
 ## Creating your own initializer
 

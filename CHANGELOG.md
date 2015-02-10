@@ -1,3 +1,18 @@
+## 0.4.0
+
+Lots of transformer updates:
+
+* The `new_entry_point` option is gone. The bootstrapped file will now always
+just be the original name but `.dart` will be replaced with `.initialize.dart`.
+* The `html_entry_point` option is gone, and the file extension is now used to
+detect if it is an html or dart file. You should no longer list the dart file
+contained in the html file. Effectively resolves
+[13](https://github.com/dart-lang/initialize/issues/13).
+* The `entry_point` option has been renamed `entry_points` and now accepts
+either a single file path or list of file paths. Additionally, it now supports
+Glob syntax so many files can be selected at once. Resolves
+[19](https://github.com/dart-lang/initialize/issues/19).
+
 ## 0.3.1
 
 * Added `InitializePluginTransformer` class in `plugin_transformer.dart` which
@@ -24,7 +39,6 @@ bootstrapped file `new_entry_point`.
 * Top level properties and static class properties are now supported in
 initializer constructors, as well as List and Map literals,
 [5](https://github.com/dart-lang/initialize/issues/5).
-
 
 ## 0.1.0+1
 

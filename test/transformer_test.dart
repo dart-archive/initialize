@@ -10,10 +10,10 @@ import 'package:unittest/compact_vm_config.dart';
 main() {
   useCompactVMConfiguration();
 
-  var transformer = new InitializeTransformer(
-      'web/index.dart', 'web/index.bootstrap.dart', 'web/index.html');
+  var htmlTransformer = new InitializeTransformer(['web/*.html']);
+  var dartTransformer = new InitializeTransformer(['web/index.dart']);
 
-  testPhases('basic', [[transformer]], {
+  testPhases('basic', [[htmlTransformer]], {
     'a|web/index.html': '''
         <html><head></head><body>
           <script type="application/dart" src="index.dart"></script>
@@ -67,10 +67,10 @@ main() {
   }, {
     'a|web/index.html': '''
         <html><head></head><body>
-          <script type="application/dart" src="index.bootstrap.dart"></script>
+          <script type="application/dart" src="index.initialize.dart"></script>
 
         </body></html>'''.replaceAll('        ', ''),
-    'a|web/index.bootstrap.dart': '''
+    'a|web/index.initialize.dart': '''
         import 'package:initialize/src/static_loader.dart';
         import 'package:initialize/initialize.dart';
         import 'index.dart' as i0;
@@ -99,7 +99,7 @@ main() {
         '''.replaceAll('        ', '')
   }, []);
 
-  testPhases('constructor arguments', [[transformer]], {
+  testPhases('constructor arguments', [[dartTransformer]], {
     'a|web/index.dart': '''
         @DynamicInit(foo)
         @DynamicInit(Foo.foo)
@@ -129,7 +129,7 @@ main() {
     'initialize|lib/initialize.dart': mockInitialize,
     'test_initializers|lib/common.dart': commonInitializers,
   }, {
-    'a|web/index.bootstrap.dart': '''
+    'a|web/index.initialize.dart': '''
         import 'package:initialize/src/static_loader.dart';
         import 'package:initialize/initialize.dart';
         import 'index.dart' as i0;
