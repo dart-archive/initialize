@@ -10,6 +10,7 @@ import 'package:analyzer/src/generated/element.dart';
 import 'package:barback/barback.dart';
 import 'package:code_transformers/assets.dart';
 import 'package:code_transformers/resolver.dart';
+import 'package:dart_style/dart_style.dart';
 import 'package:glob/glob.dart';
 import 'package:html5lib/dom.dart' as dom;
 import 'package:html5lib/parser.dart' show parse;
@@ -286,13 +287,13 @@ class _BootstrapFileBuilder {
         .forEach((lib, prefix) => _writeImport(lib, prefix, importsBuffer));
 
     // TODO(jakemac): copyright and library declaration
-    return '''
+    return new DartFormatter().format('''
 $importsBuffer
 main() {
 $initializersBuffer
   i0.main();
 }
-''';
+''');
   }
 
   _writeImport(LibraryElement lib, String prefix, StringBuffer buffer) {
