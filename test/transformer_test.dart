@@ -4,11 +4,14 @@
 library initialize.transformer_test;
 
 import 'common.dart';
+import 'package:dart_style/dart_style.dart';
 import 'package:initialize/transformer.dart';
 import 'package:unittest/compact_vm_config.dart';
 
 main() {
   useCompactVMConfiguration();
+
+  var formatter = new DartFormatter();
 
   var htmlTransformer = new InitializeTransformer(['web/*.html']);
   var dartTransformer = new InitializeTransformer(['web/index.dart']);
@@ -70,7 +73,7 @@ main() {
           <script type="application/dart" src="index.initialize.dart"></script>
 
         </body></html>'''.replaceAll('        ', ''),
-    'a|web/index.initialize.dart': '''
+    'a|web/index.initialize.dart': formatter.format('''
         import 'package:initialize/src/static_loader.dart';
         import 'package:initialize/initialize.dart';
         import 'index.dart' as i0;
@@ -96,7 +99,7 @@ main() {
 
           i0.main();
         }
-        '''.replaceAll('        ', '')
+        ''')
   }, []);
 
   testPhases('constructor arguments', [[dartTransformer]], {
@@ -129,7 +132,7 @@ main() {
     'initialize|lib/initialize.dart': mockInitialize,
     'test_initializers|lib/common.dart': commonInitializers,
   }, {
-    'a|web/index.initialize.dart': '''
+    'a|web/index.initialize.dart': formatter.format('''
         import 'package:initialize/src/static_loader.dart';
         import 'package:initialize/initialize.dart';
         import 'index.dart' as i0;
@@ -152,6 +155,6 @@ main() {
 
           i0.main();
         }
-        '''.replaceAll('        ', '')
+        ''')
   }, []);
 }
