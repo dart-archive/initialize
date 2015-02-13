@@ -1,3 +1,10 @@
+## 0.5.0-dev
+
+* The `InitializePluginTransformer` is gone in favor of a new
+`InitializerPlugin` class which you can pass a list of to the
+`InitializeTransformer`. These plugins now have access to the fully resolved ast
+nodes and can directly control what is output in the bootstrap file.
+
 ## 0.4.0
 
 Lots of transformer updates:

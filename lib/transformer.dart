@@ -16,14 +16,34 @@ import 'package:html5lib/dom.dart' as dom;
 import 'package:html5lib/parser.dart' show parse;
 import 'package:path/path.dart' as path;
 
-/// Removes the mirror-based initialization logic and replaces it with static
-/// logic.
+import 'build/initializer_plugin.dart';
+export 'build/initializer_plugin.dart';
+
+/// Create a new [Asset] which inlines your [Initializer] annotations into
+/// a new file that bootstraps your application.
+Asset generateBootstrapFile(Resolver resolver, Transform transform,
+    AssetId primaryAssetId, AssetId newEntryPointId,
+    {bool errorIfNotFound: true, List<InitializerPlugin> plugins,
+    bool appendDefaultPlugin: true}) {
+  if (appendDefaultPlugin) {
+    if (plugins == null) plugins = [];
+    plugins.add(const DefaultInitializerPlugin());
+  }
+  return new _BootstrapFileBuilder(
+      resolver, transform, primaryAssetId, newEntryPointId, errorIfNotFound,
+      plugins: plugins).run();
+}
+
+/// Transformer which removes the mirror-based initialization logic and replaces
+/// it with static logic.
 class InitializeTransformer extends Transformer {
   final Resolvers _resolvers;
   final Iterable<Glob> _entryPointGlobs;
   final bool _errorIfNotFound;
+  final List<InitializerPlugin> plugins;
 
-  InitializeTransformer(List<String> entryPoints, {bool errorIfNotFound: true})
+  InitializeTransformer(List<String> entryPoints,
+      {bool errorIfNotFound: true, this.plugins})
       : _entryPointGlobs = entryPoints.map((e) => new Glob(e)),
         _errorIfNotFound = errorIfNotFound,
         _resolvers = new Resolvers.fromMock({
@@ -107,12 +127,35 @@ class InitializeTransformer extends Transformer {
       }
 
       return _resolvers.get(transform, [primaryId]).then((resolver) {
-        new _BootstrapFileBuilder(resolver, transform, primaryId,
-            newEntryPointId, _errorIfNotFound).run();
+        transform.addOutput(generateBootstrapFile(
+            resolver, transform, primaryId, newEntryPointId,
+            errorIfNotFound: _errorIfNotFound, plugins: plugins));
         resolver.release();
         return newEntryPointId;
       });
     });
+  }
+  // Finds the first (and only) dart script on an html page and returns the
+  // [AssetId] that points to it
+  AssetId _findMainScript(
+      dom.Document document, AssetId entryPoint, Transform transform) {
+    var scripts = document.querySelectorAll('script[type="application/dart"]');
+    if (scripts.length != 1) {
+      transform.logger.error('Expected exactly one dart script in $entryPoint '
+          'but found ${scripts.length}.');
+      return null;
+    }
+
+    var src = scripts[0].attributes['src'];
+    if (src == null) {
+      // TODO(jakemac): Support inline scripts,
+      transform.logger.error('Inline scripts are not supported at this time, '
+          'see https://github.com/dart-lang/initialize/issues/20.');
+      return null;
+    }
+
+    return uriToAssetId(
+        entryPoint, src, transform.logger, scripts[0].sourceSpan);
   }
 
   // Replaces script tags pointing to [originalDartFile] with [newDartFile] in
@@ -120,11 +163,14 @@ class InitializeTransformer extends Transformer {
   void _replaceEntryWithBootstrap(Transform transform, dom.Document document,
       AssetId entryPoint, AssetId originalDartFile, AssetId newDartFile) {
     var found = false;
+
     var scripts = document
         .querySelectorAll('script[type="application/dart"]')
-        .where((script) => uriToAssetId(entryPoint, script.attributes['src'],
-            transform.logger, script.sourceSpan) == originalDartFile)
-        .toList();
+        .where((script) {
+      var assetId = uriToAssetId(entryPoint, script.attributes['src'],
+          transform.logger, script.sourceSpan);
+      return assetId == originalDartFile;
+    }).toList();
 
     if (scripts.length != 1) {
       transform.logger.error(
@@ -136,29 +182,9 @@ class InitializeTransformer extends Transformer {
         from: path.dirname(entryPoint.path));
     transform.addOutput(new Asset.fromString(entryPoint, document.outerHtml));
   }
-
-  AssetId _findMainScript(
-      dom.Document document, AssetId entryPoint, Transform transform) {
-    var scripts = document.querySelectorAll('script[type="application/dart"]');
-    if (scripts.length != 1) {
-      transform.logger.error('Expected exactly one dart script in $entryPoint '
-          'but found ${scripts.length}.');
-      return null;
-    }
-
-    var src = scripts[0].attributes['src'];
-    // TODO(jakemac): Support inline scripts,
-    // https://github.com/dart-lang/initialize/issues/20
-    if (src == null) {
-      transform.logger.error('Inline scripts are not supported at this time.');
-      return null;
-    }
-
-    return uriToAssetId(
-        entryPoint, src, transform.logger, scripts[0].sourceSpan);
-  }
 }
 
+// Class which builds a bootstrap file.
 class _BootstrapFileBuilder {
   final Resolver _resolver;
   final Transform _transform;
@@ -172,14 +198,19 @@ class _BootstrapFileBuilder {
   ClassElement _initializer;
 
   /// Queue for intialization annotations.
-  final _initQueue = new Queue<_InitializerData>();
+  final _initQueue = new Queue<InitializerData>();
   /// All the annotations we have seen for each element
   final _seenAnnotations = new Map<Element, Set<ElementAnnotation>>();
+
+  /// The list of [InitializerPlugin]s to apply. The first plugin which asks to
+  /// be applied to a given initializer is the only one that will apply.
+  List<InitializerPlugin> _plugins;
 
   TransformLogger _logger;
 
   _BootstrapFileBuilder(this._resolver, this._transform, this._entryPoint,
-      this._newEntryPoint, this._errorIfNotFound) {
+      this._newEntryPoint, this._errorIfNotFound,
+      {List<InitializerPlugin> plugins}) {
     _logger = _transform.logger;
     _initializeLibrary =
         _resolver.getLibrary(new AssetId('initialize', 'lib/initialize.dart'));
@@ -190,15 +221,15 @@ class _BootstrapFileBuilder {
           'This file must be imported via $_entryPoint or a transitive '
           'dependency.');
     }
+    _plugins = plugins != null ? plugins : [const DefaultInitializerPlugin()];
   }
 
-  /// Adds the new entry point file to the transform. Should only be ran once.
-  void run() {
+  /// Creates and returns the new bootstrap file.
+  Asset run() {
     var entryLib = _resolver.getLibrary(_entryPoint);
     _readLibraries(entryLib);
 
-    _transform.addOutput(
-        new Asset.fromString(_newEntryPoint, _buildNewEntryPoint(entryLib)));
+    return new Asset.fromString(_newEntryPoint, _buildNewEntryPoint(entryLib));
   }
 
   /// Reads Initializer annotations on this library and all its dependencies in
@@ -253,7 +284,7 @@ class _BootstrapFileBuilder {
       return !_seenAnnotations[element].contains(meta);
     }).forEach((ElementAnnotation meta) {
       _seenAnnotations[element].add(meta);
-      _initQueue.addLast(new _InitializerData(element, meta));
+      _initQueue.addLast(new InitializerData._(element, meta));
       found = true;
     });
     return found;
@@ -270,18 +301,28 @@ class _BootstrapFileBuilder {
     importsBuffer.writeln("import 'package:initialize/initialize.dart';");
     libraryPrefixes[entryLib] = 'i0';
 
-    initializersBuffer.writeln('  initializers.addAll([');
+    initializersBuffer.writeln('initializers.addAll([');
     while (_initQueue.isNotEmpty) {
       var next = _initQueue.removeFirst();
 
       libraryPrefixes.putIfAbsent(
-          next.element.library, () => 'i${libraryPrefixes.length}');
-      libraryPrefixes.putIfAbsent(
-          next.annotation.element.library, () => 'i${libraryPrefixes.length}');
+          next.targetElement.library, () => 'i${libraryPrefixes.length}');
+      libraryPrefixes.putIfAbsent(next.annotationElement.element.library,
+          () => 'i${libraryPrefixes.length}');
 
-      _writeInitializer(next, libraryPrefixes, initializersBuffer);
+      // Run the first plugin which asks to be ran and then stop.
+      var data = new InitializerPluginData(
+          next, _newEntryPoint, libraryPrefixes, _resolver, _logger);
+      var plugin = _plugins.firstWhere((p) => p.shouldApply(data), orElse: () {
+        _logger.error('No InitializerPlugin handled the annotation: '
+            '${next.annotationElement} on: ${next.targetElement}.');
+      });
+      if (plugin == null) continue;
+
+      var text = plugin.apply(data);
+      if (text != null) initializersBuffer.writeln('$text,');
     }
-    initializersBuffer.writeln('  ]);');
+    initializersBuffer.writeln(']);');
 
     libraryPrefixes
         .forEach((lib, prefix) => _writeImport(lib, prefix, importsBuffer));
@@ -313,164 +354,6 @@ $initializersBuffer
       _logger.error("Can't import `${id}` from `${_newEntryPoint}`");
     }
     buffer.writeln(' as $prefix;');
-  }
-
-  _writeInitializer(_InitializerData data,
-      Map<LibraryElement, String> libraryPrefixes, StringBuffer buffer) {
-    final annotationElement = data.annotation.element;
-    final element = data.element;
-
-    final metaPrefix = libraryPrefixes[annotationElement.library];
-    var elementString;
-    if (element is LibraryElement) {
-      var segments = element.source.uri.pathSegments;
-      var package = segments[0];
-      var libraryPath;
-      var packageString;
-      if (_newEntryPoint.package == package &&
-          _newEntryPoint.path.startsWith('${segments[1]}/')) {
-        // reset `package` to null, we will do a relative path in this case.
-        packageString = 'null';
-        libraryPath = path.url.relative(
-            path.url.joinAll(segments.getRange(1, segments.length)),
-            from: path.url.dirname(path.url.join(_newEntryPoint.path)));
-      } else if (segments[1] == 'lib') {
-        packageString = "'$package'";
-        libraryPath = path.url.joinAll(segments.getRange(2, segments.length));
-      } else {
-        _logger.error('Unable to import `${element.source.uri.path}` from '
-            '${_newEntryPoint.path}.');
-      }
-
-      elementString = "const LibraryIdentifier("
-          "#${element.name}, $packageString, '$libraryPath')";
-    } else if (element is ClassElement || element is FunctionElement) {
-      elementString =
-          '${libraryPrefixes[data.element.library]}.${element.name}';
-    } else {
-      _logger.error('Initializers can only be applied to top level functins, '
-          'libraries, and classes.');
-    }
-
-    if (annotationElement is ConstructorElement) {
-      var node = data.element.node;
-      List<Annotation> astMeta;
-      if (node is SimpleIdentifier) {
-        astMeta = node.parent.parent.metadata;
-      } else if (node is ClassDeclaration || node is FunctionDeclaration) {
-        astMeta = node.metadata;
-      } else {
-        _logger.error(
-            'Initializer annotations are only supported on libraries, classes, '
-            'and top level methods. Found $node.');
-      }
-      final annotation =
-          astMeta.firstWhere((m) => m.elementAnnotation == data.annotation);
-      final clazz = annotation.name;
-      final constructor = annotation.constructorName == null
-          ? ''
-          : '.${annotation.constructorName}';
-      // TODO(jakemac): Support more than raw values here
-      // https://github.com/dart-lang/static_init/issues/5
-      final args = _buildArgsString(annotation.arguments, libraryPrefixes);
-      buffer.write('''
-    new InitEntry(const $metaPrefix.${clazz}$constructor$args, $elementString),
-''');
-    } else if (annotationElement is PropertyAccessorElement) {
-      buffer.write('''
-    new InitEntry($metaPrefix.${annotationElement.name}, $elementString),
-''');
-    } else {
-      _logger.error('Unsupported annotation type. Only constructors and '
-          'properties are supported as initializers.');
-    }
-  }
-
-  String _buildArgsString(
-      ArgumentList args, Map<LibraryElement, String> libraryPrefixes) {
-    var buffer = new StringBuffer();
-    buffer.write('(');
-    var first = true;
-    for (var arg in args.arguments) {
-      if (!first) buffer.write(', ');
-      first = false;
-
-      Expression expression;
-      if (arg is NamedExpression) {
-        buffer.write('${arg.name.label.name}: ');
-        expression = arg.expression;
-      } else {
-        expression = arg;
-      }
-
-      buffer.write(_expressionString(expression, libraryPrefixes));
-    }
-    buffer.write(')');
-    return buffer.toString();
-  }
-
-  String _expressionString(
-      Expression expression, Map<LibraryElement, String> libraryPrefixes) {
-    var buffer = new StringBuffer();
-    if (expression is StringLiteral) {
-      var value = expression.stringValue;
-      if (value == null) {
-        _logger.error('Only const strings are allowed in initializer '
-            'expressions, found $expression');
-      }
-      value = value.replaceAll(r'\', r'\\').replaceAll(r"'", r"\'");
-      buffer.write("'$value'");
-    } else if (expression is BooleanLiteral ||
-        expression is DoubleLiteral ||
-        expression is IntegerLiteral ||
-        expression is NullLiteral) {
-      buffer.write('${expression}');
-    } else if (expression is ListLiteral) {
-      buffer.write('const [');
-      var first = true;
-      for (Expression listExpression in expression.elements) {
-        if (!first) buffer.write(', ');
-        first = false;
-        buffer.write(_expressionString(listExpression, libraryPrefixes));
-      }
-      buffer.write(']');
-    } else if (expression is MapLiteral) {
-      buffer.write('const {');
-      var first = true;
-      for (MapLiteralEntry entry in expression.entries) {
-        if (!first) buffer.write(', ');
-        first = false;
-        buffer.write(_expressionString(entry.key, libraryPrefixes));
-        buffer.write(': ');
-        buffer.write(_expressionString(entry.value, libraryPrefixes));
-      }
-      buffer.write('}');
-    } else if (expression is Identifier) {
-      var element = expression.bestElement;
-      if (element == null || !element.isPublic) {
-        _logger.error('Private constants are not supported in intializer '
-            'constructors, found $element.');
-      }
-      libraryPrefixes.putIfAbsent(
-          element.library, () => 'i${libraryPrefixes.length}');
-
-      buffer.write('${libraryPrefixes[element.library]}.');
-      if (element is ClassElement) {
-        buffer.write(element.name);
-      } else if (element is PropertyAccessorElement) {
-        var variable = element.variable;
-        if (variable is FieldElement) {
-          buffer.write('${variable.enclosingElement.name}.');
-        }
-        buffer.write('${variable.name}');
-      } else {
-        _logger.error('Unsupported argument to initializer constructor.');
-      }
-    } else {
-      _logger.error('Only literals and identifiers are allowed for initializer '
-          'expressions, found $expression.');
-    }
-    return buffer.toString();
   }
 
   bool _isInitializer(InterfaceType type) {
@@ -562,12 +445,43 @@ $initializersBuffer
     })).map((import) => import.importedLibrary);
 }
 
-// Element/ElementAnnotation pair.
-class _InitializerData {
-  final Element element;
-  final ElementAnnotation annotation;
+/// An [Initializer] annotation and the target of that annotation.
+class InitializerData {
+  /// The target [Element] of the annotation.
+  final Element targetElement;
 
-  _InitializerData(this.element, this.annotation);
+  /// The [ElementAnnotation] representing the annotation itself.
+  final ElementAnnotation annotationElement;
+
+  AstNode _targetNode;
+
+  /// The target [AstNode] of the annotation.
+  // TODO(jakemac): We at least cache this for now, but  ideally `targetElement`
+  // would actually be the getter, and `targetNode` would be the property.
+  AstNode get targetNode {
+    if (_targetNode == null) _targetNode = targetElement.node;
+    return _targetNode;
+  }
+
+  /// The [Annotation] representing the annotation itself.
+  Annotation get annotationNode {
+    var annotatedNode;
+    if (targetNode is SimpleIdentifier &&
+        targetNode.parent is LibraryIdentifier) {
+      annotatedNode = targetNode.parent.parent;
+    } else if (targetNode is ClassDeclaration ||
+        targetNode is FunctionDeclaration) {
+      annotatedNode = targetNode;
+    } else {
+      return null;
+    }
+    if (annotatedNode is! AnnotatedNode) return null;
+    var astMeta = annotatedNode.metadata;
+
+    return astMeta.firstWhere((m) => m.elementAnnotation == annotationElement);
+  }
+
+  InitializerData._(this.targetElement, this.annotationElement);
 }
 
 // Reads a file list from a barback settings configuration field.

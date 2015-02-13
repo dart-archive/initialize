@@ -4,19 +4,26 @@
 library initialize.transformer_test;
 
 import 'common.dart';
+import 'package:analyzer/src/generated/element.dart';
 import 'package:dart_style/dart_style.dart';
 import 'package:initialize/transformer.dart';
 import 'package:unittest/compact_vm_config.dart';
+import 'package:unittest/unittest.dart';
+
+var formatter = new DartFormatter();
 
 main() {
   useCompactVMConfiguration();
 
-  var formatter = new DartFormatter();
+  group('Html entry points', htmlEntryPointTests);
+  group('Dart entry points', dartEntryPointTests);
+  group('InitializerPlugins', pluginTests);
+}
 
-  var htmlTransformer = new InitializeTransformer(['web/*.html']);
-  var dartTransformer = new InitializeTransformer(['web/index.dart']);
+void htmlEntryPointTests() {
+  var phases = [[new InitializeTransformer(['web/*.html'])]];
 
-  testPhases('basic', [[htmlTransformer]], {
+  testPhases('basic', phases, {
     'a|web/index.html': '''
         <html><head></head><body>
           <script type="application/dart" src="index.dart"></script>
@@ -101,8 +108,12 @@ main() {
         }
         ''')
   }, []);
+}
 
-  testPhases('constructor arguments', [[dartTransformer]], {
+void dartEntryPointTests() {
+  var phases = [[new InitializeTransformer(['web/index.dart'])]];
+
+  testPhases('constructor arguments', phases, {
     'a|web/index.dart': '''
         @DynamicInit(foo)
         @DynamicInit(Foo.foo)
@@ -151,6 +162,68 @@ main() {
             new InitEntry(const i1.DynamicInit(1), const LibraryIdentifier(#web_foo, null, 'index.dart')),
             new InitEntry(const i1.DynamicInit(1.1), const LibraryIdentifier(#web_foo, null, 'index.dart')),
             new InitEntry(const i1.NamedArgInit(1, name: 'Bill'), const LibraryIdentifier(#web_foo, null, 'index.dart')),
+          ]);
+
+          i0.main();
+        }
+        ''')
+  }, []);
+}
+
+class SkipConstructorsPlugin extends InitializerPlugin {
+  bool shouldApply(InitializerPluginData data) {
+    return data.initializer.annotationElement.element is ConstructorElement;
+  }
+
+  String apply(_) => null;
+}
+
+void pluginTests() {
+  var phases = [
+    [
+      new InitializeTransformer(['web/index.dart'],
+          plugins: [new SkipConstructorsPlugin()])
+    ]
+  ];
+
+  testPhases('can omit statements', phases, {
+    'a|web/index.dart': '''
+        library index;
+
+        import 'package:initialize/initialize.dart';
+        import 'package:test_initializers/common.dart';
+        import 'foo.dart';
+
+        @initMethod
+        @DynamicInit('index')
+        index() {}
+        ''',
+    'a|web/foo.dart': '''
+        library foo;
+
+        import 'package:initialize/initialize.dart';
+        import 'package:test_initializers/common.dart';
+
+        @initMethod
+        @DynamicInit('Foo')
+        foo() {}
+        ''',
+    // Mock out the Initialize package plus some initializers.
+    'initialize|lib/initialize.dart': mockInitialize,
+    'test_initializers|lib/common.dart': commonInitializers,
+  }, {
+    'a|web/index.initialize.dart': formatter.format('''
+        import 'package:initialize/src/static_loader.dart';
+        import 'package:initialize/initialize.dart';
+        import 'index.dart' as i0;
+        import 'foo.dart' as i1;
+        import 'package:initialize/initialize.dart' as i2;
+        import 'package:test_initializers/common.dart' as i3;
+
+        main() {
+          initializers.addAll([
+            new InitEntry(i2.initMethod, i1.foo),
+            new InitEntry(i2.initMethod, i0.index),
           ]);
 
           i0.main();

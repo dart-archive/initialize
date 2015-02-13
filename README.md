@@ -91,3 +91,15 @@ something like the following:
 Now when people use the annotation, it just looks like `@initMethod` without any
 parenthesis, and its a bit more efficient since there is a single instance. You
 can also make your class private to force users into using the static instance.
+
+## Creating custom transformer plugins
+
+It is possible to create a custom plugin for the initialize transformer which
+allows you to have full control over what happens to your annotations at compile
+time. Implement `InitializerPlugin` class and pass that in to the
+`InitializeTransformer` to make it take effect.
+
+You will need to be familiar with the `analyzer` package in order to write these
+plugins, but they can be extremely powerful. See the `DefaultInitializerPlugin`
+in `lib/build/initializer_plugin.dart` as a reference. Chances are you may want
+to extend that class in order to get a lot of the default functionality.
