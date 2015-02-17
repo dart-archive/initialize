@@ -1,4 +1,4 @@
-## 0.5.0-dev
+## 0.5.0
 
 * The `InitializePluginTransformer` is gone in favor of a new
 `InitializerPlugin` class which you can pass a list of to the
