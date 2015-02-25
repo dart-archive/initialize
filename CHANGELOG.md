@@ -1,3 +1,11 @@
+## 0.5.1
+
+* Added support for more types of expressions in constructor annotations. More
+specifically, any const expressions that evaluate to a `String`, `int`,
+`double`, or `bool` are now allowed. The evaluated value is what will be inlined
+in the bootstrap file in this case.
+
+
 ## 0.5.0
 
 * The `InitializePluginTransformer` is gone in favor of a new

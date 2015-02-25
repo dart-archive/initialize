@@ -92,8 +92,6 @@ class DefaultInitializerPlugin implements InitializerPlugin {
     var constructor = annotation.constructorName == null
         ? ''
         : '.${annotation.constructorName}';
-    // TODO(jakemac): Support more than raw values here
-    // https://github.com/dart-lang/static_init/issues/5
     var args = buildArgumentList(annotation.arguments, pluginData);
     return 'const $metaPrefix.${clazz}$constructor$args';
   }
@@ -202,14 +200,8 @@ class DefaultInitializerPlugin implements InitializerPlugin {
     var logger = pluginData.logger;
     var libraryPrefixes = pluginData.libraryPrefixes;
     var buffer = new StringBuffer();
-    if (expression is StringLiteral) {
-      var value = expression.stringValue;
-      if (value == null) {
-        logger.error('Only const strings are allowed in initializer '
-            'expressions, found $expression');
-      }
-      value = value.replaceAll(r'\', r'\\').replaceAll(r"'", r"\'");
-      buffer.write("'$value'");
+    if (expression is StringLiteral && expression.stringValue != null) {
+      buffer.write(_stringValue(expression.stringValue));
     } else if (expression is BooleanLiteral ||
         expression is DoubleLiteral ||
         expression is IntegerLiteral ||
@@ -239,7 +231,7 @@ class DefaultInitializerPlugin implements InitializerPlugin {
       var element = expression.bestElement;
       if (element == null || !element.isPublic) {
         logger.error('Private constants are not supported in intializer '
-            'constructors, found $element.');
+        'constructors, found $element.');
       }
       libraryPrefixes.putIfAbsent(
           element.library, () => 'i${libraryPrefixes.length}');
@@ -256,10 +248,38 @@ class DefaultInitializerPlugin implements InitializerPlugin {
       } else {
         logger.error('Unsupported argument to initializer constructor.');
       }
+    } else if (expression is PropertyAccess) {
+      buffer.write(buildExpression(expression.target, pluginData));
+      buffer.write('.${expression.propertyName}');
+    } else if (expression is InstanceCreationExpression) {
+      logger.error('Unsupported expression in initializer, found $expression. '
+          'Instance creation expressions are not supported (yet). Instead, '
+          'please assign it to a const variable and use that instead.');
     } else {
-      logger.error('Only literals and identifiers are allowed for initializer '
-          'expressions, found $expression.');
+      // Try to evaluate the constant and use that.
+      var result = pluginData.resolver.evaluateConstant(
+          pluginData.initializer.targetElement.library, expression);
+      if (!result.isValid) {
+        logger.error('Invalid expression in initializer, found $expression. '
+            'And got the following errors: ${result.errors}.');
+      }
+      var value = result.value.value;
+      if (value == null) {
+        logger.error('Unsupported expression in initializer, found '
+            '$expression. Please file a bug at '
+            'https://github.com/dart-lang/initialize/issues');
+      }
+
+      if (value is String) value = _stringValue(value);
+      buffer.write(value);
     }
     return buffer.toString();
+  }
+
+  // Returns an expression for a string value. Wraps it in single quotes and
+  // escapes existing single quotes and escapes.
+  _stringValue(String value) {
+    value = value.replaceAll(r'\', r'\\').replaceAll(r"'", r"\'");
+    return "'$value'";
   }
 }

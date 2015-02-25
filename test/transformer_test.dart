@@ -117,6 +117,8 @@ void dartEntryPointTests() {
     'a|web/index.dart': '''
         @DynamicInit(foo)
         @DynamicInit(Foo.foo)
+        @DynamicInit(bar.Foo.bar)
+        @DynamicInit(bar.Foo.foo)
         @DynamicInit(const [foo, Foo.foo, 'foo'])
         @DynamicInit(const {'foo': foo, 'Foo.foo': Foo.foo, 'bar': 'bar'})
         @DynamicInit('foo')
@@ -124,19 +126,36 @@ void dartEntryPointTests() {
         @DynamicInit(null)
         @DynamicInit(1)
         @DynamicInit(1.1)
+        @DynamicInit('foo-\$x\${y}')
+        @DynamicInit(1 + 2)
+        @DynamicInit(1.0 + 0.2)
+        @DynamicInit(1 == 1)
         @NamedArgInit(1, name: 'Bill')
         library web_foo;
 
         import 'package:test_initializers/common.dart';
         import 'foo.dart';
+        import 'foo.dart' as bar;
+
+        const x = 'x';
+        const y = 'y';
+
+        class MyConst {
+          const MyConst;
+        }
         ''',
     'a|web/foo.dart': '''
         library foo;
 
         const String foo = 'foo';
 
+        class Bar {
+          const Bar();
+        }
+
         class Foo {
           static foo = 'Foo.foo';
+          static bar = const Bar();
         }
         ''',
     // Mock out the Initialize package plus some initializers.
@@ -154,6 +173,8 @@ void dartEntryPointTests() {
           initializers.addAll([
             new InitEntry(const i1.DynamicInit(i2.foo), const LibraryIdentifier(#web_foo, null, 'index.dart')),
             new InitEntry(const i1.DynamicInit(i2.Foo.foo), const LibraryIdentifier(#web_foo, null, 'index.dart')),
+            new InitEntry(const i1.DynamicInit(i2.Foo.bar), const LibraryIdentifier(#web_foo, null, 'index.dart')),
+            new InitEntry(const i1.DynamicInit(i2.Foo.foo), const LibraryIdentifier(#web_foo, null, 'index.dart')),
             new InitEntry(const i1.DynamicInit(const [i2.foo, i2.Foo.foo, 'foo']), const LibraryIdentifier(#web_foo, null, 'index.dart')),
             new InitEntry(const i1.DynamicInit(const {'foo': i2.foo, 'Foo.foo': i2.Foo.foo, 'bar': 'bar'}), const LibraryIdentifier(#web_foo, null, 'index.dart')),
             new InitEntry(const i1.DynamicInit('foo'), const LibraryIdentifier(#web_foo, null, 'index.dart')),
@@ -161,6 +182,10 @@ void dartEntryPointTests() {
             new InitEntry(const i1.DynamicInit(null), const LibraryIdentifier(#web_foo, null, 'index.dart')),
             new InitEntry(const i1.DynamicInit(1), const LibraryIdentifier(#web_foo, null, 'index.dart')),
             new InitEntry(const i1.DynamicInit(1.1), const LibraryIdentifier(#web_foo, null, 'index.dart')),
+            new InitEntry(const i1.DynamicInit('foo-xy'), const LibraryIdentifier(#web_foo, null, 'index.dart')),
+            new InitEntry(const i1.DynamicInit(3), const LibraryIdentifier(#web_foo, null, 'index.dart')),
+            new InitEntry(const i1.DynamicInit(1.2), const LibraryIdentifier(#web_foo, null, 'index.dart')),
+            new InitEntry(const i1.DynamicInit(true), const LibraryIdentifier(#web_foo, null, 'index.dart')),
             new InitEntry(const i1.NamedArgInit(1, name: 'Bill'), const LibraryIdentifier(#web_foo, null, 'index.dart')),
           ]);
 
