@@ -11,6 +11,9 @@
 */*/*/*/packages/*/*: Skip
 */*/*/*/*/packages/*/*: Skip
 
+# failing tests
+test/deferred_library_test.dart: RuntimeError # Issue 22592
+
 # tests that don't need to be ran after pub-build
 build/test/transformer_test.dart: Skip
 build/test/static_init_cycle_error_test.dart: Skip # Build time warning
