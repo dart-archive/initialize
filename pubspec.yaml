@@ -22,6 +22,7 @@ transformers:
 - initialize:
     $include: '**/*_test.dart'
     entry_points:
+      - test/deferred_library_test.dart
       - test/initializer_test.dart
       - test/initializer_cycle_error_test.dart
       - test/initializer_custom_filter_test.dart

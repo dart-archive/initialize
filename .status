@@ -13,6 +13,7 @@
 
 # failing tests
 test/deferred_library_test.dart: RuntimeError # Issue 22592
+build/test/deferred_library_test.dart: RuntimeError # Issue 22592
 
 # tests that don't need to be ran after pub-build
 build/test/transformer_test.dart: Skip

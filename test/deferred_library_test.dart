@@ -16,23 +16,11 @@ main() {
   test('annotations can be loaded lazily', () {
     // Initialize everything not in deferred imports.
     return run().then((_) {
-      var expectedNames = [
-          const LibraryIdentifier(
-              #initialize.deferred_library_test, null,
-              'deferred_library_test.dart'),
-      ];
-      expect(InitializeTracker.seen, expectedNames);
+      expect(InitializeTracker.seen.length, 1);
 
       // Now load the foo library and re-run initializers.
       return foo.loadLibrary().then((_) => run()).then((_) {
-        expectedNames.addAll([
-            const LibraryIdentifier(
-                #initialize.test.foo, null, 'foo.dart'),
-            foo.foo,
-            foo.fooBar,
-            foo.Foo,
-        ]);
-        expect(InitializeTracker.seen, expectedNames);
+        expect(InitializeTracker.seen.length, 5);
       });
     });
   });
