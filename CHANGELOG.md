@@ -1,3 +1,7 @@
+## 0.5.1+1
+
+* Make sure to always use `path.url` in the transformer.
+
 ## 0.5.1
 
 * Added support for more types of expressions in constructor annotations. More

@@ -347,8 +347,8 @@ $initializersBuffer
       _logger.error("Can't import `${id}` from `${_newEntryPoint}`");
     } else if (path.url.split(id.path)[0] ==
         path.url.split(_newEntryPoint.path)[0]) {
-      var relativePath =
-          path.relative(id.path, from: path.dirname(_newEntryPoint.path));
+      var relativePath = path.url.relative(
+          id.path, from: path.url.dirname(_newEntryPoint.path));
       buffer.write("import '${relativePath}'");
     } else {
       _logger.error("Can't import `${id}` from `${_newEntryPoint}`");
@@ -437,10 +437,10 @@ $initializersBuffer
       }
 
       // And finally compare based on the relative uri if both are file paths.
-      var aUri = path.relative(a.source.uri.path,
-          from: path.dirname(library.source.uri.path));
-      var bUri = path.relative(b.source.uri.path,
-          from: path.dirname(library.source.uri.path));
+      var aUri = path.url.relative(a.source.uri.path,
+          from: path.url.dirname(library.source.uri.path));
+      var bUri = path.url.relative(b.source.uri.path,
+          from: path.url.dirname(library.source.uri.path));
       return aUri.compareTo(bUri);
     })).map((import) => import.importedLibrary);
 }
