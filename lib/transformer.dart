@@ -238,12 +238,12 @@ class _BootstrapFileBuilder {
     if (seen == null) seen = new Set<LibraryElement>();
     seen.add(library);
 
-    // Visit all our dependencies.
-    for (var importedLibrary in _sortedLibraryImports(library)) {
+    // Visit all our imports.
+    for (var library in _sortedLibraryDependencies(library)) {
       // Don't include anything from the sdk.
-      if (importedLibrary.isInSdk) continue;
-      if (seen.contains(importedLibrary)) continue;
-      _readLibraries(importedLibrary, seen);
+      if (library.isInSdk) continue;
+      if (seen.contains(library)) continue;
+      _readLibraries(library, seen);
     }
 
     // Read annotations in this order: library, top level methods, classes.
@@ -415,14 +415,20 @@ $initializersBuffer
     }
   }
 
-  Iterable<LibraryElement> _sortedLibraryImports(LibraryElement library) =>
-      (new List.from(library.imports)
-    ..sort((ImportElement a, ImportElement b) {
+  Iterable<LibraryElement> _sortedLibraryDependencies(LibraryElement library) {
+    getLibrary(UriReferencedElement element) {
+      if (element is ImportElement) return element.importedLibrary;
+      if (element is ExportElement) return element.exportedLibrary;
+    }
+
+    return (new List.from(library.imports)
+      ..addAll(library.exports)
+      ..sort((a, b) {
       // dart: imports don't have a uri
       if (a.uri == null && b.uri != null) return -1;
       if (b.uri == null && a.uri != null) return 1;
       if (a.uri == null && b.uri == null) {
-        return a.importedLibrary.name.compareTo(b.importedLibrary.name);
+        return getLibrary(a).name.compareTo(getLibrary(b).name);
       }
 
       // package: imports next
@@ -442,7 +448,8 @@ $initializersBuffer
       var bUri = path.url.relative(b.source.uri.path,
           from: path.url.dirname(library.source.uri.path));
       return aUri.compareTo(bUri);
-    })).map((import) => import.importedLibrary);
+    })).map(getLibrary);
+  }
 }
 
 /// An [Initializer] annotation and the target of that annotation.

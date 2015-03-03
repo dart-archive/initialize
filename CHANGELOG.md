@@ -1,3 +1,9 @@
+## 0.5.1+2
+
+* Fix handling of exported libraries. Specifically, annotations on exported
+libraries will now be reached and imports in exported libraries will now be
+reached.
+
 ## 0.5.1+1
 
 * Make sure to always use `path.url` in the transformer.

@@ -193,6 +193,93 @@ void dartEntryPointTests() {
         }
         ''')
   }, []);
+
+  testPhases('exported library annotations', phases, {
+    'a|web/index.dart': '''
+        library web_foo;
+
+        export 'foo.dart';
+        ''',
+    'a|web/foo.dart': '''
+        @constInit
+        library foo;
+
+        import 'package:test_initializers/common.dart';
+
+        @constInit
+        foo() {};
+
+        @constInit
+        class Foo {}
+        ''',
+    // Mock out the Initialize package plus some initializers.
+    'initialize|lib/initialize.dart': mockInitialize,
+    'test_initializers|lib/common.dart': commonInitializers,
+  }, {
+    'a|web/index.initialize.dart': formatter.format('''
+        import 'package:initialize/src/static_loader.dart';
+        import 'package:initialize/initialize.dart';
+        import 'index.dart' as i0;
+        import 'foo.dart' as i1;
+        import 'package:test_initializers/common.dart' as i2;
+
+        main() {
+          initializers.addAll([
+            new InitEntry(i2.constInit, const LibraryIdentifier(#foo, null, 'foo.dart')),
+            new InitEntry(i2.constInit, i1.foo),
+            new InitEntry(i2.constInit, i1.Foo),
+          ]);
+
+          i0.main();
+        }
+        ''')
+  }, []);
+
+  testPhases('imports from exported libraries', phases, {
+    'a|web/index.dart': '''
+        library web_foo;
+
+        export 'foo.dart';
+        ''',
+    'a|web/foo.dart': '''
+        library foo;
+
+        import 'bar.dart';
+        ''',
+    'a|web/bar.dart': '''
+        @constInit
+        library bar;
+
+        import 'package:test_initializers/common.dart';
+
+        @constInit
+        bar() {};
+
+        @constInit
+        class Bar {}
+        ''',
+    // Mock out the Initialize package plus some initializers.
+    'initialize|lib/initialize.dart': mockInitialize,
+    'test_initializers|lib/common.dart': commonInitializers,
+  }, {
+    'a|web/index.initialize.dart': formatter.format('''
+        import 'package:initialize/src/static_loader.dart';
+        import 'package:initialize/initialize.dart';
+        import 'index.dart' as i0;
+        import 'bar.dart' as i1;
+        import 'package:test_initializers/common.dart' as i2;
+
+        main() {
+          initializers.addAll([
+            new InitEntry(i2.constInit, const LibraryIdentifier(#bar, null, 'bar.dart')),
+            new InitEntry(i2.constInit, i1.bar),
+            new InitEntry(i2.constInit, i1.Bar),
+          ]);
+
+          i0.main();
+        }
+        ''')
+  }, []);
 }
 
 class SkipConstructorsPlugin extends InitializerPlugin {
