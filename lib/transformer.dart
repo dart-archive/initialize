@@ -238,7 +238,7 @@ class _BootstrapFileBuilder {
     if (seen == null) seen = new Set<LibraryElement>();
     seen.add(library);
 
-    // Visit all our imports.
+    // Visit all our dependencies.
     for (var library in _sortedLibraryDependencies(library)) {
       // Don't include anything from the sdk.
       if (library.isInSdk) continue;
@@ -416,6 +416,7 @@ $initializersBuffer
   }
 
   Iterable<LibraryElement> _sortedLibraryDependencies(LibraryElement library) {
+    // TODO(jakemac): Investigate supporting annotations on part-of directives.
     getLibrary(UriReferencedElement element) {
       if (element is ImportElement) return element.importedLibrary;
       if (element is ExportElement) return element.exportedLibrary;
