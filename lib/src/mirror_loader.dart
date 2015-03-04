@@ -54,7 +54,7 @@ class InitializationCrawler {
       // Dartium creates an extra trampoline lib that loads the main dart script
       // and breaks our ordering.
       if (librariesSeen.contains(libToRun) ||
-          libToRun.uri.toString().endsWith('\$trampoline')) {
+          libToRun.uri.path.endsWith('\$trampoline')) {
         continue;
       }
       _readLibraryDeclarations(libToRun, librariesSeen, queue);
