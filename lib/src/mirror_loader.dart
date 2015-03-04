@@ -8,6 +8,8 @@ import 'dart:mirrors';
 import 'package:path/path.dart' as path;
 import 'package:initialize/initialize.dart';
 
+final _root = currentMirrorSystem().isolate.rootLibrary;
+
 Queue<Function> loadInitializers(
     {List<Type> typeFilter, InitializerFilter customFilter}) {
   return new InitializationCrawler(typeFilter, customFilter).run();
@@ -28,24 +30,60 @@ class InitializationCrawler {
   // function will be processed.
   final InitializerFilter customFilter;
 
-  // The root library that we start parsing from.
-  LibraryMirror _root;
-
-  InitializationCrawler(this.typeFilter, this.customFilter,
-      {LibraryMirror root}) {
-    _root = root == null ? currentMirrorSystem().isolate.rootLibrary : root;
-  }
+  InitializationCrawler(this.typeFilter, this.customFilter);
 
   // The primary function in this class, invoke it to crawl and collect all the
   // annotations into a queue of init functions.
-  Queue<Function> run() => _readLibraryDeclarations(_root);
+  Queue<Function> run() {
+    var librariesSeen = new Set<LibraryMirror>();
+    var queue = new Queue<Function>();
+
+    var libraries = currentMirrorSystem().libraries;
+    var nonDartOrPackageImports = new List.from(libraries.keys.where(
+        (uri) => uri.scheme != 'package' && uri.scheme != 'dart'));
+
+    for (var import in nonDartOrPackageImports.reversed) {
+      // Always load the package: version of a library if available.
+      var libToRun;
+      if (_isHttpStylePackageUrl(import)) {
+        var packageUri = _packageUriFor(import);
+        libToRun = libraries[packageUri];
+      }
+      if (libToRun == null) libToRun = libraries[import];
+
+      // Dartium creates an extra trampoline lib that loads the main dart script
+      // and breaks our ordering.
+      if (librariesSeen.contains(libToRun) ||
+          libToRun.uri.toString().endsWith('\$trampoline')) {
+        continue;
+      }
+      _readLibraryDeclarations(libToRun, librariesSeen, queue);
+    }
+
+    return queue;
+  }
+
+  /// Whether [uri] is an http URI that contains a 'packages' segment, and
+  /// therefore could be converted into a 'package:' URI.
+  bool _isHttpStylePackageUrl(Uri uri) {
+    var uriPath = uri.path;
+    return uri.scheme == _root.uri.scheme &&
+        // Don't process cross-domain uris.
+        uri.authority == _root.uri.authority &&
+        uriPath.endsWith('.dart') &&
+        (uriPath.contains('/packages/') || uriPath.startsWith('packages/'));
+  }
+
+  Uri _packageUriFor(Uri httpUri) {
+    var packagePath = httpUri.path.substring(
+        httpUri.path.lastIndexOf('packages/') + 'packages/'.length);
+    return Uri.parse('package:$packagePath');
+  }
 
   // Reads Initializer annotations on this library and all its dependencies in
   // post-order.
   Queue<Function> _readLibraryDeclarations(LibraryMirror lib,
-      [Set<LibraryMirror> librariesSeen, Queue<Function> queue]) {
-    if (librariesSeen == null) librariesSeen = new Set<LibraryMirror>();
-    if (queue == null) queue = new Queue<Function>();
+      Set<LibraryMirror> librariesSeen, Queue<Function> queue) {
     librariesSeen.add(lib);
 
     // First visit all our dependencies.
@@ -148,6 +186,10 @@ class InitializationCrawler {
         var package;
         var filePath;
         Uri uri = declaration.uri;
+        // Convert to a package style uri if possible.
+        if (_isHttpStylePackageUrl(uri)) {
+          uri = _packageUriFor(uri);
+        }
         if (uri.scheme == 'file' || uri.scheme.startsWith('http')) {
           filePath = path.url.relative(uri.path,
               from: path.url.dirname(_root.uri.path));
