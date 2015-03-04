@@ -1,3 +1,12 @@
+## 0.5.1+2
+
+* Fix handling of exported libraries. Specifically, annotations on exported
+libraries will now be reached and imports in exported libraries will now be
+reached.
+* Add support for scripts living in html imports without adding an html
+dependency by crawling all libraries in the mirror system in reverse order,
+instead of just the root one.
+
 ## 0.5.1+1
 
 * Make sure to always use `path.url` in the transformer.
