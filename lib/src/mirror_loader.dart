@@ -37,31 +37,43 @@ class InitializationCrawler {
   Queue<Function> run() {
     var librariesSeen = new Set<LibraryMirror>();
     var queue = new Queue<Function>();
-
     var libraries = currentMirrorSystem().libraries;
-    var nonDartOrPackageImports = new List.from(libraries.keys.where(
-        (uri) => uri.scheme != 'package' && uri.scheme != 'dart'));
 
-    for (var import in nonDartOrPackageImports.reversed) {
-      // Always load the package: version of a library if available.
-      var libToRun;
-      if (_isHttpStylePackageUrl(import)) {
-        var packageUri = _packageUriFor(import);
-        libToRun = libraries[packageUri];
-      }
-      if (libToRun == null) libToRun = libraries[import];
+    var trampolineUri = Uri.parse('${_root.uri}\$trampoline');
+    if (libraries.containsKey(trampolineUri)) {
+      // In dartium, process all relative libraries in reverse order of when
+      // they were seen.
+      // TODO(jakemac): This is an approximation of what we actually want.
+      // https://github.com/dart-lang/initialize/issues/25
+      var relativeLibraryUris = new List.from(libraries.keys.where(
+              (uri) => uri.scheme != 'package' && uri.scheme != 'dart'));
 
-      // Dartium creates an extra trampoline lib that loads the main dart script
-      // and breaks our ordering.
-      if (librariesSeen.contains(libToRun) ||
-          libToRun.uri.path.endsWith('\$trampoline')) {
-        continue;
+      for (var import in relativeLibraryUris.reversed) {
+        // Always load the package: version of a library if available for
+        // canonicalization purposes.
+        var libToRun;
+        if (_isHttpStylePackageUrl(import)) {
+          var packageUri = _packageUriFor(import);
+          libToRun = libraries[packageUri];
+        }
+        if (libToRun == null) libToRun = libraries[import];
+
+        // Dartium creates an extra trampoline lib that loads the main dart script
+        // and breaks our ordering, we should skip it.
+        if (librariesSeen.contains(libToRun) ||
+            libToRun.uri.path.endsWith('\$trampoline')) {
+          continue;
+        }
+        _readLibraryDeclarations(libToRun, librariesSeen, queue);
       }
-      _readLibraryDeclarations(libToRun, librariesSeen, queue);
+    } else {
+      // Not in dartium, just process from the root library.
+      _readLibraryDeclarations(_root, librariesSeen, queue);
     }
 
     return queue;
   }
+
 
   /// Whether [uri] is an http URI that contains a 'packages' segment, and
   /// therefore could be converted into a 'package:' URI.

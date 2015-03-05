@@ -1,3 +1,8 @@
+## 0.5.1+3
+
+* Fix up mirror based import crawling so it detects dartium and only crawl all
+libraries in the mirror system in that case.
+
 ## 0.5.1+2
 
 * Fix handling of exported libraries. Specifically, annotations on exported
