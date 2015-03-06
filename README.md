@@ -1,5 +1,4 @@
-Initialize
-==========
+# Initialize [![Build Status](https://travis-ci.org/dart-lang/initialize.svg?branch=master)](https://travis-ci.org/dart-lang/initialize)
 
 This package provides a common interface for initialization annotations on top
 level methods, classes, and libraries. The interface looks like this:
