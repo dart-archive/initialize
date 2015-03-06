@@ -3,3 +3,5 @@ language: dart
 dart:
   - dev
   - stable
+
+script: ./tool/all_tests.sh
