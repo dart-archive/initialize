@@ -244,9 +244,9 @@ void dartEntryPointTests() {
     'a|web/foo.dart': '''
         library foo;
 
-        import 'bar.dart';
+        import 'foo/bar.dart';
         ''',
-    'a|web/bar.dart': '''
+    'a|web/foo/bar.dart': '''
         @constInit
         library bar;
 
@@ -266,12 +266,12 @@ void dartEntryPointTests() {
         import 'package:initialize/src/static_loader.dart';
         import 'package:initialize/initialize.dart';
         import 'index.dart' as i0;
-        import 'bar.dart' as i1;
+        import 'foo/bar.dart' as i1;
         import 'package:test_initializers/common.dart' as i2;
 
         main() {
           initializers.addAll([
-            new InitEntry(i2.constInit, const LibraryIdentifier(#bar, null, 'bar.dart')),
+            new InitEntry(i2.constInit, const LibraryIdentifier(#bar, null, 'foo/bar.dart')),
             new InitEntry(i2.constInit, i1.bar),
             new InitEntry(i2.constInit, i1.Bar),
           ]);

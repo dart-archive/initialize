@@ -5,7 +5,7 @@
 library initialize.initializer_test;
 
 import 'foo.dart';
-import 'bar.dart';
+import 'foo/bar.dart';
 import 'package:initialize/src/initialize_tracker.dart';
 import 'package:initialize/initialize.dart';
 import 'package:test_package/foo.dart';
@@ -25,7 +25,7 @@ main() {
         foo,
         fooBar,
         Foo,
-        const LibraryIdentifier(#initialize.test.bar, null, 'bar.dart'),
+        const LibraryIdentifier(#initialize.test.foo.bar, null, 'foo/bar.dart'),
         bar,
         Bar,
         const LibraryIdentifier(
