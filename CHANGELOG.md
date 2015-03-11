@@ -1,3 +1,8 @@
+## 0.5.1+4
+
+* Update to use mock dart sdk from `code_transformers` and update the `analyzer`
+and `code_transformers` dependencies.
+
 ## 0.5.1+3
 
 * Fix up mirror based import crawling so it detects dartium and only crawl all
