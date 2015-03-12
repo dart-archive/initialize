@@ -1,0 +1,5 @@
+{
+  "post_pub_build_hooks" : {
+    "Rename output files for testing": "$dart $project_root/tool/rename_build_outputs.dart"
+  }
+}

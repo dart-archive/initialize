@@ -15,6 +15,15 @@
 build/test/transformer_test.dart: Skip
 build/test/static_init_cycle_error_test.dart: Skip # Build time warning
 
+# tests that need to run, but we use the bootstrap output instead
+# (build/test/foo.initialize.dart) which is renamed by the .test_config scripts.
+build/test/deferred_library_test.dart: Skip
+build/test/initializer_custom_filter_test.dart: Skip
+build/test/initializer_cycle_error_test.dart: Skip
+build/test/initializer_test.dart: Skip
+build/test/initializer_type_filter_test.dart: Skip
+build/test/init_method_test.dart: Skip
+
 # failing tests
 [ $compiler == none ]
 test/deferred_library_test: RuntimeError # Issue 22592
