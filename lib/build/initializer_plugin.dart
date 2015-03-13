@@ -231,7 +231,7 @@ class DefaultInitializerPlugin implements InitializerPlugin {
       var element = expression.bestElement;
       if (element == null || !element.isPublic) {
         logger.error('Private constants are not supported in intializer '
-        'constructors, found $element.');
+            'constructors, found $element.');
       }
       libraryPrefixes.putIfAbsent(
           element.library, () => 'i${libraryPrefixes.length}');

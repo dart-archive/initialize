@@ -45,8 +45,8 @@ class InitializationCrawler {
       // they were seen.
       // TODO(jakemac): This is an approximation of what we actually want.
       // https://github.com/dart-lang/initialize/issues/25
-      var relativeLibraryUris = new List.from(libraries.keys.where(
-              (uri) => uri.scheme != 'package' && uri.scheme != 'dart'));
+      var relativeLibraryUris = new List.from(libraries.keys
+          .where((uri) => uri.scheme != 'package' && uri.scheme != 'dart'));
 
       for (var import in relativeLibraryUris.reversed) {
         // Always load the package: version of a library if available for
@@ -74,7 +74,6 @@ class InitializationCrawler {
     return queue;
   }
 
-
   /// Whether [uri] is an http URI that contains a 'packages' segment, and
   /// therefore could be converted into a 'package:' URI.
   bool _isHttpStylePackageUrl(Uri uri) {
@@ -87,8 +86,8 @@ class InitializationCrawler {
   }
 
   Uri _packageUriFor(Uri httpUri) {
-    var packagePath = httpUri.path.substring(
-        httpUri.path.lastIndexOf('packages/') + 'packages/'.length);
+    var packagePath = httpUri.path
+        .substring(httpUri.path.lastIndexOf('packages/') + 'packages/'.length);
     return Uri.parse('package:$packagePath');
   }
 

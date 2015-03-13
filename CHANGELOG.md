@@ -1,3 +1,9 @@
+## 0.5.1+5
+
+* Fix an issue where for certain programs the transformer could fail,
+  [33](https://github.com/dart-lang/polymer-dart/issues/33).
+
+
 ## 0.5.1+4
 
 * Update to use mock dart sdk from `code_transformers` and update the `analyzer`

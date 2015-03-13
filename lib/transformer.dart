@@ -62,8 +62,8 @@ class InitializeTransformer extends Transformer {
         var document = parse(html);
         var originalDartFile =
             _findMainScript(document, transform.primaryInput.id, transform);
-        return _buildBootstrapFile(transform, primaryId: originalDartFile).then(
-            (AssetId newDartFile) {
+        return _buildBootstrapFile(transform, primaryId: originalDartFile)
+            .then((AssetId newDartFile) {
           return _replaceEntryWithBootstrap(transform, document,
               transform.primaryInput.id, originalDartFile, newDartFile);
         });
@@ -233,8 +233,21 @@ class _BootstrapFileBuilder {
 
   bool _readAnnotations(Element element) {
     var found = false;
-    element.metadata.where((ElementAnnotation meta) {
+    if (element.metadata.isEmpty) return found;
+
+    var metaNodes;
+    var node = element.node;
+    if (node is SimpleIdentifier && node.parent is LibraryIdentifier) {
+      metaNodes = node.parent.parent.metadata;
+    } else if (node is ClassDeclaration || node is FunctionDeclaration) {
+      metaNodes = node.metadata;
+    } else {
+      return found;
+    }
+
+    metaNodes.where((Annotation metaNode) {
       // First filter out anything that is not a Initializer.
+      var meta = metaNode.elementAnnotation;
       var e = meta.element;
       if (e is PropertyAccessorElement) {
         return _isInitializer(e.variable.evaluationResult.value.type);
@@ -242,12 +255,14 @@ class _BootstrapFileBuilder {
         return _isInitializer(e.returnType);
       }
       return false;
-    }).where((ElementAnnotation meta) {
+    }).where((Annotation metaNode) {
+      var meta = metaNode.elementAnnotation;
       _seenAnnotations.putIfAbsent(element, () => new Set<ElementAnnotation>());
       return !_seenAnnotations[element].contains(meta);
-    }).forEach((ElementAnnotation meta) {
+    }).forEach((Annotation metaNode) {
+      var meta = metaNode.elementAnnotation;
       _seenAnnotations[element].add(meta);
-      _initQueue.addLast(new InitializerData._(element, meta));
+      _initQueue.addLast(new InitializerData._(node, metaNode));
       found = true;
     });
     return found;
@@ -310,8 +325,8 @@ $initializersBuffer
       _logger.error("Can't import `${id}` from `${_newEntryPoint}`");
     } else if (path.url.split(id.path)[0] ==
         path.url.split(_newEntryPoint.path)[0]) {
-      var relativePath = path.url.relative(
-          id.path, from: path.url.dirname(_newEntryPoint.path));
+      var relativePath = path.url.relative(id.path,
+          from: path.url.dirname(_newEntryPoint.path));
       buffer.write("import '${relativePath}'");
     } else {
       _logger.error("Can't import `${id}` from `${_newEntryPoint}`");
@@ -388,71 +403,59 @@ $initializersBuffer
     return (new List.from(library.imports)
       ..addAll(library.exports)
       ..sort((a, b) {
-      // dart: imports don't have a uri
-      if (a.uri == null && b.uri != null) return -1;
-      if (b.uri == null && a.uri != null) return 1;
-      if (a.uri == null && b.uri == null) {
-        return getLibrary(a).name.compareTo(getLibrary(b).name);
-      }
+        // dart: imports don't have a uri
+        if (a.uri == null && b.uri != null) return -1;
+        if (b.uri == null && a.uri != null) return 1;
+        if (a.uri == null && b.uri == null) {
+          return getLibrary(a).name.compareTo(getLibrary(b).name);
+        }
 
-      // package: imports next
-      var aIsPackage = a.uri.startsWith('package:');
-      var bIsPackage = b.uri.startsWith('package:');
-      if (aIsPackage && !bIsPackage) {
-        return -1;
-      } else if (bIsPackage && !aIsPackage) {
-        return 1;
-      } else if (bIsPackage && aIsPackage) {
-        return a.uri.compareTo(b.uri);
-      }
+        // package: imports next
+        var aIsPackage = a.uri.startsWith('package:');
+        var bIsPackage = b.uri.startsWith('package:');
+        if (aIsPackage && !bIsPackage) {
+          return -1;
+        } else if (bIsPackage && !aIsPackage) {
+          return 1;
+        } else if (bIsPackage && aIsPackage) {
+          return a.uri.compareTo(b.uri);
+        }
 
-      // And finally compare based on the relative uri if both are file paths.
-      var aUri = path.url.relative(a.source.uri.path,
-          from: path.url.dirname(library.source.uri.path));
-      var bUri = path.url.relative(b.source.uri.path,
-          from: path.url.dirname(library.source.uri.path));
-      return aUri.compareTo(bUri);
-    })).map(getLibrary);
+        // And finally compare based on the relative uri if both are file paths.
+        var aUri = path.url.relative(a.source.uri.path,
+            from: path.url.dirname(library.source.uri.path));
+        var bUri = path.url.relative(b.source.uri.path,
+            from: path.url.dirname(library.source.uri.path));
+        return aUri.compareTo(bUri);
+      })).map(getLibrary);
   }
 }
 
 /// An [Initializer] annotation and the target of that annotation.
 class InitializerData {
-  /// The target [Element] of the annotation.
-  final Element targetElement;
-
-  /// The [ElementAnnotation] representing the annotation itself.
-  final ElementAnnotation annotationElement;
-
-  AstNode _targetNode;
-
   /// The target [AstNode] of the annotation.
-  // TODO(jakemac): We at least cache this for now, but  ideally `targetElement`
-  // would actually be the getter, and `targetNode` would be the property.
-  AstNode get targetNode {
-    if (_targetNode == null) _targetNode = targetElement.node;
-    return _targetNode;
-  }
+  final AstNode targetNode;
 
   /// The [Annotation] representing the annotation itself.
-  Annotation get annotationNode {
-    var annotatedNode;
+  final Annotation annotationNode;
+
+  /// The [ElementAnnotation] representing the annotation itself.
+  ElementAnnotation get annotationElement => annotationNode.elementAnnotation;
+
+  /// The target [Element] of the annotation.
+  Element get targetElement {
     if (targetNode is SimpleIdentifier &&
         targetNode.parent is LibraryIdentifier) {
-      annotatedNode = targetNode.parent.parent;
+      return targetNode.parent.parent.element;
     } else if (targetNode is ClassDeclaration ||
         targetNode is FunctionDeclaration) {
-      annotatedNode = targetNode;
+      return targetNode.element;
     } else {
       return null;
     }
-    if (annotatedNode is! AnnotatedNode) return null;
-    var astMeta = annotatedNode.metadata;
-
-    return astMeta.firstWhere((m) => m.elementAnnotation == annotationElement);
   }
 
-  InitializerData._(this.targetElement, this.annotationElement);
+  InitializerData._(this.targetNode, this.annotationNode);
 }
 
 // Reads a file list from a barback settings configuration field.
