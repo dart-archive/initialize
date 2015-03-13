@@ -1,3 +1,7 @@
+## 0.5.1+6
+
+* Fix some analyzer warnings.
+
 ## 0.5.1+5
 
 * Fix an issue where for certain programs the transformer could fail,
