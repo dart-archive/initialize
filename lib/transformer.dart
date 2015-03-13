@@ -446,10 +446,10 @@ class InitializerData {
   Element get targetElement {
     if (targetNode is SimpleIdentifier &&
         targetNode.parent is LibraryIdentifier) {
-      return targetNode.parent.parent.element;
+      return (targetNode.parent.parent as LibraryDirective).element;
     } else if (targetNode is ClassDeclaration ||
         targetNode is FunctionDeclaration) {
-      return targetNode.element;
+      return (targetNode as dynamic).element;
     } else {
       return null;
     }

@@ -13,7 +13,7 @@
 
 # tests that don't need to be ran after pub-build
 build/test/transformer_test: Skip
-build/test/static_init_cycle_error_test: Skip # Build time warning
+build/test/initializer_cycle_error_test.initialize_test: Skip # Build time warning
 
 # tests that need to run, but we use the bootstrap output instead
 # (build/test/foo.initialize.dart) which is renamed by the .test_config scripts.
@@ -27,7 +27,7 @@ build/test/init_method_test: Skip
 # failing tests
 [ $compiler == none ]
 test/deferred_library_test: RuntimeError # Issue 22592
-build/test/deferred_library_test: RuntimeError # Issue 22592
+build/test/deferred_library_test.initialize_test: RuntimeError # Issue 22592
 
 [ $browser ]
 # All tests are for the standalone vm only
