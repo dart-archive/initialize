@@ -21,6 +21,7 @@ build/test/deferred_library_test: Skip
 build/test/initializer_custom_filter_test: Skip
 build/test/initializer_cycle_error_test: Skip
 build/test/initializer_test: Skip
+build/test/initializer_parts_test: Skip
 build/test/initializer_type_filter_test: Skip
 build/test/init_method_test: Skip
 

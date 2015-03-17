@@ -280,6 +280,79 @@ void dartEntryPointTests() {
         }
         ''')
   }, []);
+
+  testPhases('library parts and exports', phases, {
+    'a|web/index.dart': '''
+        @constInit
+        library index;
+
+        import 'package:test_initializers/common.dart';
+        export 'export.dart';
+
+        part 'foo.dart';
+        part 'bar.dart';
+
+        @constInit
+        index() {};
+
+        @constInit
+        class Index {};
+        ''',
+    'a|web/foo.dart': '''
+        part of index;
+
+        @constInit
+        foo() {};
+
+        @constInit
+        class Foo {};
+        ''',
+    'a|web/bar.dart': '''
+        part of index;
+
+        @constInit
+        bar() {};
+
+        @constInit
+        class Bar {};
+        ''',
+    'a|web/export.dart': '''
+        @constInit
+        library export;
+
+        import 'package:test_initializers/common.dart';
+
+        @constInit
+        class Export {};
+        ''',
+    // Mock out the Initialize package plus some initializers.
+    'initialize|lib/initialize.dart': mockInitialize,
+    'test_initializers|lib/common.dart': commonInitializers,
+  }, {
+    'a|web/index.initialize.dart': formatter.format('''
+        import 'package:initialize/src/static_loader.dart';
+        import 'package:initialize/initialize.dart';
+        import 'index.dart' as i0;
+        import 'export.dart' as i1;
+        import 'package:test_initializers/common.dart' as i2;
+
+        main() {
+          initializers.addAll([
+            new InitEntry(i2.constInit, const LibraryIdentifier(#export, null, 'export.dart')),
+            new InitEntry(i2.constInit, i1.Export),
+            new InitEntry(i2.constInit, const LibraryIdentifier(#index, null, 'index.dart')),
+            new InitEntry(i2.constInit, i0.bar),
+            new InitEntry(i2.constInit, i0.foo),
+            new InitEntry(i2.constInit, i0.index),
+            new InitEntry(i2.constInit, i0.Bar),
+            new InitEntry(i2.constInit, i0.Foo),
+            new InitEntry(i2.constInit, i0.Index),
+          ]);
+
+          i0.main();
+        }
+        ''')
+  }, []);
 }
 
 class SkipConstructorsPlugin extends InitializerPlugin {

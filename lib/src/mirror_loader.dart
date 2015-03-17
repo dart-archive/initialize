@@ -98,7 +98,7 @@ class InitializationCrawler {
     librariesSeen.add(lib);
 
     // First visit all our dependencies.
-    for (var dependency in _sortedLibraryDependencies(lib)) {
+    for (var dependency in lib.libraryDependencies) {
       // Skip dart: imports, they never use this package.
       if (dependency.targetLibrary.uri.toString().startsWith('dart:')) continue;
       if (librariesSeen.contains(dependency.targetLibrary)) continue;
@@ -110,7 +110,7 @@ class InitializationCrawler {
     _readAnnotations(lib, queue);
 
     // Last, parse all class and method annotations.
-    for (var declaration in _sortedLibraryDeclarations(lib)) {
+    for (var declaration in _sortedDeclarationsWithMetadata(lib)) {
       _readAnnotations(declaration, queue);
       // Check classes for static annotations which are not supported
       if (declaration is ClassMirror) {
@@ -123,34 +123,37 @@ class InitializationCrawler {
     return queue;
   }
 
-  Iterable<LibraryDependencyMirror> _sortedLibraryDependencies(
-      LibraryMirror lib) => new List.from(lib.libraryDependencies)
-    ..sort((a, b) {
-      var aScheme = a.targetLibrary.uri.scheme;
-      var bScheme = b.targetLibrary.uri.scheme;
-      if (aScheme != 'file' && bScheme == 'file') return -1;
-      if (bScheme != 'file' && aScheme == 'file') return 1;
-      return _relativeLibraryUri(a).compareTo(_relativeLibraryUri(b));
-    });
-
-  String _relativeLibraryUri(LibraryDependencyMirror lib) {
-    if (lib.targetLibrary.uri.scheme == 'file' &&
-        lib.sourceLibrary.uri.scheme == 'file') {
-      return path.relative(lib.targetLibrary.uri.path,
-          from: path.dirname(lib.sourceLibrary.uri.path));
-    }
-    return lib.targetLibrary.uri.toString();
+  Iterable<DeclarationMirror> _sortedDeclarationsWithMetadata(
+      LibraryMirror lib) {
+    return new List()
+      ..addAll(_sortDeclarations(
+          lib, lib.declarations.values.where(
+                  (d) => d is MethodMirror && d.metadata.isNotEmpty)))
+      ..addAll(_sortDeclarations(
+          lib, lib.declarations.values.where(
+                  (d) => d is ClassMirror && d.metadata.isNotEmpty)));
   }
 
-  Iterable<DeclarationMirror> _sortedLibraryDeclarations(LibraryMirror lib) =>
-      lib.declarations.values
-          .where((d) => d is ClassMirror || d is MethodMirror)
-          .toList()
-    ..sort((a, b) {
-      if (a is MethodMirror && b is ClassMirror) return -1;
-      if (a is ClassMirror && b is MethodMirror) return 1;
-      return _declarationName(a).compareTo(_declarationName(b));
+  List<DeclarationMirror> _sortDeclarations(
+      LibraryMirror sourceLib, Iterable<DeclarationMirror> declarations) {
+    var declarationList = declarations.toList();
+    declarationList.sort((DeclarationMirror a, DeclarationMirror b) {
+      // If in the same file, compare by line.
+      var aSourceUri = a.location.sourceUri;
+      var bSourceUri = b.location.sourceUri;
+      if (aSourceUri == bSourceUri) {
+        return a.location.line.compareTo(b.location.line);
+      }
+
+      // Run parts first if one is from the original library.
+      if (aSourceUri == sourceLib.uri) return 1;
+      if (bSourceUri == sourceLib.uri) return -1;
+
+      // Sort parts alphabetically.
+      return aSourceUri.path.compareTo(bSourceUri.path);
     });
+    return declarationList;
+  }
 
   String _declarationName(DeclarationMirror declaration) =>
       MirrorSystem.getName(declaration.qualifiedName);

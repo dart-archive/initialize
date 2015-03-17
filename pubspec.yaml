@@ -1,5 +1,5 @@
 name: initialize
-version: 0.5.1+6
+version: 0.5.1+7
 author: Polymer.dart Authors <web@dartlang.org>
 description: Generic building blocks for doing static initialization.
 homepage: https://github.com/dart-lang/initialize
@@ -25,6 +25,7 @@ transformers:
     entry_points:
       - test/deferred_library_test.dart
       - test/initializer_test.dart
+      - test/initializer_parts_test.dart
       - test/initializer_cycle_error_test.dart
       - test/initializer_custom_filter_test.dart
       - test/initializer_type_filter_test.dart

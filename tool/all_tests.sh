@@ -7,12 +7,24 @@
 # Fast fail the script on failures.
 set -e
 
-# Run the command-line tests.
+# Run the un-transformed command-line tests.
 # TODO(jakemac): Add back once http://dartbug.com/22592 is fixed.
 # dart test/deferred_library_test.dart
 dart test/init_method_test.dart
 dart test/initializer_custom_filter_test.dart
 dart test/initializer_cycle_error_test.dart
 dart test/initializer_test.dart
+dart test/initializer_parts_test.dart
 dart test/initializer_type_filter_test.dart
 dart test/transformer_test.dart
+
+pub build test --mode=debug
+
+# Run the transformed command-line tests.
+# TODO(jakemac): Add back once initialize supports deferred libraries.
+# dart test/deferred_library_test.dart
+dart build/test/init_method_test.initialize.dart
+dart build/test/initializer_custom_filter_test.initialize.dart
+dart build/test/initializer_test.initialize.dart
+dart build/test/initializer_parts_test.initialize.dart
+dart build/test/initializer_type_filter_test.initialize.dart

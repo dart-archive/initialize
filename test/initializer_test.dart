@@ -4,7 +4,6 @@
 @initializeTracker
 library initialize.initializer_test;
 
-import 'foo.dart';
 import 'foo/bar.dart';
 import 'package:initialize/src/initialize_tracker.dart';
 import 'package:initialize/initialize.dart';
@@ -19,20 +18,20 @@ main() {
   run().then((_) {
     test('annotations are seen in post-order with superclasses first', () {
       var expectedNames = [
-        const LibraryIdentifier(#test_package.bar, 'test_package', 'bar.dart'),
-        const LibraryIdentifier(#test_package.foo, 'test_package', 'foo.dart'),
         const LibraryIdentifier(#initialize.test.foo, null, 'foo.dart'),
-        foo,
         fooBar,
+        foo,
         Foo,
         const LibraryIdentifier(#initialize.test.foo.bar, null, 'foo/bar.dart'),
         bar,
         Bar,
+        const LibraryIdentifier(#test_package.bar, 'test_package', 'bar.dart'),
+        const LibraryIdentifier(#test_package.foo, 'test_package', 'foo.dart'),
         const LibraryIdentifier(
             #initialize.initializer_test, null, 'initializer_test.dart'),
         zap,
         Zoop, // Zap extends Zoop, so Zoop comes first.
-        Zap
+        Zap,
       ];
       expect(InitializeTracker.seen, expectedNames);
     });

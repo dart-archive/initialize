@@ -351,46 +351,53 @@ $initializersBuffer
   /// [lib]. This includes exported methods from other libraries too.
   List<FunctionElement> _topLevelMethodsOfLibrary(
       LibraryElement library, Set<LibraryElement> seen) {
-    var result = [];
-    result.addAll(library.units.expand((u) => u.functions));
-    for (var export in library.exports) {
+    var methods = [];
+
+    var orderedExports = new List.from(library.exports)
+      ..sort((a, b) => a.uriOffset.compareTo(b.uriOffset));
+    for (var export in orderedExports) {
       if (seen.contains(export.exportedLibrary)) continue;
-      var exported = _topLevelMethodsOfLibrary(export.exportedLibrary, seen);
-      _filter(exported, export.combinators);
-      result.addAll(exported);
+      methods.addAll(_topLevelMethodsOfLibrary(export.exportedLibrary, seen));
     }
-    result.sort((a, b) => a.name.compareTo(b.name));
-    return result;
+
+    for (CompilationUnitElement unit in _orderedUnits(library)) {
+      methods.addAll(new List.from(unit.functions)
+        ..sort((a, b) => a.nameOffset.compareTo(b.nameOffset)));
+    }
+
+    return methods;
   }
 
   /// Retrieves all classes that are visible if you were to import [lib]. This
   /// includes exported classes from other libraries.
   List<ClassElement> _classesOfLibrary(
       LibraryElement library, Set<LibraryElement> seen) {
-    var result = [];
-    result.addAll(library.units.expand((u) => u.types));
-    for (var export in library.exports) {
+    var classes = [];
+
+    var orderedExports = new List.from(library.exports)
+      ..sort((a, b) => a.uriOffset.compareTo(b.uriOffset));
+    for (var export in orderedExports) {
       if (seen.contains(export.exportedLibrary)) continue;
-      var exported = _classesOfLibrary(export.exportedLibrary, seen);
-      _filter(exported, export.combinators);
-      result.addAll(exported);
+      classes.addAll(_classesOfLibrary(export.exportedLibrary, seen));
     }
-    result.sort((a, b) => a.name.compareTo(b.name));
-    return result;
+
+    for (var unit in _orderedUnits(library)) {
+      classes.addAll(new List.from(unit.types)
+        ..sort((a, b) => a.nameOffset.compareTo(b.nameOffset)));
+    }
+
+    return classes;
   }
 
-  /// Filters [elements] that come from an export, according to its show/hide
-  /// combinators. This modifies [elements] in place.
-  void _filter(List<Element> elements, List<NamespaceCombinator> combinators) {
-    for (var c in combinators) {
-      if (c is ShowElementCombinator) {
-        var show = c.shownNames.toSet();
-        elements.retainWhere((e) => show.contains(e.displayName));
-      } else if (c is HideElementCombinator) {
-        var hide = c.hiddenNames.toSet();
-        elements.removeWhere((e) => hide.contains(e.displayName));
-      }
-    }
+  List<CompilationUnitElement> _orderedUnits(LibraryElement library) {
+    var definingUnit = library.definingCompilationUnit;
+    // The first item is the source library, remove it for now.
+    return new List.from(library.units)
+      ..sort((a, b) {
+        if (a == definingUnit) return 1;
+        if (b == definingUnit) return -1;
+        return a.uri.compareTo(b.uri);
+      });
   }
 
   Iterable<LibraryElement> _sortedLibraryDependencies(LibraryElement library) {
@@ -402,32 +409,7 @@ $initializersBuffer
 
     return (new List.from(library.imports)
       ..addAll(library.exports)
-      ..sort((a, b) {
-        // dart: imports don't have a uri
-        if (a.uri == null && b.uri != null) return -1;
-        if (b.uri == null && a.uri != null) return 1;
-        if (a.uri == null && b.uri == null) {
-          return getLibrary(a).name.compareTo(getLibrary(b).name);
-        }
-
-        // package: imports next
-        var aIsPackage = a.uri.startsWith('package:');
-        var bIsPackage = b.uri.startsWith('package:');
-        if (aIsPackage && !bIsPackage) {
-          return -1;
-        } else if (bIsPackage && !aIsPackage) {
-          return 1;
-        } else if (bIsPackage && aIsPackage) {
-          return a.uri.compareTo(b.uri);
-        }
-
-        // And finally compare based on the relative uri if both are file paths.
-        var aUri = path.url.relative(a.source.uri.path,
-            from: path.url.dirname(library.source.uri.path));
-        var bUri = path.url.relative(b.source.uri.path,
-            from: path.url.dirname(library.source.uri.path));
-        return aUri.compareTo(bUri);
-      })).map(getLibrary);
+      ..sort((a, b) => a.nameOffset.compareTo(b.nameOffset))).map(getLibrary);
   }
 }
 

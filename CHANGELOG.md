@@ -1,3 +1,10 @@
+## 0.5.1+7
+
+* Change to source order-crawling of directives instead of alphabetical. The one
+exception is for `part` directives, those are still crawled in alphabetical
+order since we can't currently get the original source order from the mirror
+system.
+
 ## 0.5.1+6
 
 * Fix some analyzer warnings.
