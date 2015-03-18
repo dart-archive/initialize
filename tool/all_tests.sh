@@ -15,6 +15,7 @@ dart test/initializer_custom_filter_test.dart
 dart test/initializer_cycle_error_test.dart
 dart test/initializer_test.dart
 dart test/initializer_parts_test.dart
+dart test/initializer_super_test.dart
 dart test/initializer_type_filter_test.dart
 dart test/transformer_test.dart
 
@@ -27,4 +28,5 @@ dart build/test/init_method_test.initialize.dart
 dart build/test/initializer_custom_filter_test.initialize.dart
 dart build/test/initializer_test.initialize.dart
 dart build/test/initializer_parts_test.initialize.dart
+dart build/test/initializer_super_test.initialize.dart
 dart build/test/initializer_type_filter_test.initialize.dart

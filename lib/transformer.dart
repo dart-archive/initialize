@@ -215,8 +215,9 @@ class _BootstrapFileBuilder {
       _readAnnotations(method);
     }
     for (var clazz in _classesOfLibrary(library, seen)) {
-      var superClass = clazz.supertype;
-      while (superClass != null) {
+      readSuperClassAnnotations(InterfaceType superClass) {
+        if (superClass == null) return;
+        readSuperClassAnnotations(superClass.superclass);
         if (_readAnnotations(superClass.element) &&
             superClass.element.library != clazz.library) {
           _logger.warning(
@@ -225,8 +226,8 @@ class _BootstrapFileBuilder {
               '${superClass.name} has a dependency on this library '
               '(possibly transitive).');
         }
-        superClass = superClass.superclass;
       }
+      readSuperClassAnnotations(clazz.supertype);
       _readAnnotations(clazz);
     }
   }

@@ -126,12 +126,10 @@ class InitializationCrawler {
   Iterable<DeclarationMirror> _sortedDeclarationsWithMetadata(
       LibraryMirror lib) {
     return new List()
-      ..addAll(_sortDeclarations(
-          lib, lib.declarations.values.where(
-                  (d) => d is MethodMirror && d.metadata.isNotEmpty)))
-      ..addAll(_sortDeclarations(
-          lib, lib.declarations.values.where(
-                  (d) => d is ClassMirror && d.metadata.isNotEmpty)));
+      ..addAll(_sortDeclarations(lib, lib.declarations.values
+          .where((d) => d is MethodMirror && d.metadata.isNotEmpty)))
+      ..addAll(_sortDeclarations(lib, lib.declarations.values
+          .where((d) => d is ClassMirror && d.metadata.isNotEmpty)));
   }
 
   List<DeclarationMirror> _sortDeclarations(

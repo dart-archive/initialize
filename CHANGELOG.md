@@ -1,3 +1,7 @@
+## 0.5.1+8
+* Make sure to crawl the entire supertype chain for annotations, and run them
+in reverse order.
+
 ## 0.5.1+7
 
 * Change to source order-crawling of directives instead of alphabetical. The one
