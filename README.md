@@ -9,8 +9,8 @@ level methods, classes, and libraries. The interface looks like this:
 
 The `initialize` method will be called once for each annotation. The type `T` is
 determined by what was annotated. For libraries it will be a `LibraryIdentifier`
-representing that library, for a class it will be the Type representing that
-class, and for a top level method it will be the Function object representing
+representing that library, for a class it will be the `Type` representing that
+class, and for a top level method it will be the `Function` object representing
 that method.
 
 If a future is returned from the initialize method, it will wait until the future
