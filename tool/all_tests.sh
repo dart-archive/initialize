@@ -13,9 +13,10 @@ set -e
 dart test/init_method_test.dart
 dart test/initializer_custom_filter_test.dart
 dart test/initializer_cycle_error_test.dart
-dart test/initializer_test.dart
+dart test/initializer_from_test.dart
 dart test/initializer_parts_test.dart
 dart test/initializer_super_test.dart
+dart test/initializer_test.dart
 dart test/initializer_type_filter_test.dart
 dart test/transformer_test.dart
 
