@@ -14,7 +14,7 @@
 # tests that don't need to be ran after pub-build
 build/test/transformer_test: Skip
 build/test/initializer_cycle_error_test.initialize_test: Skip # Build time warning
-build/test/initializer_from_test: RuntimeError # By Design
+build/test/initializer_from_test.initialize_test: RuntimeError # By Design
 
 # tests that need to run, but we use the bootstrap output instead
 # (build/test/foo.initialize.dart) which is renamed by the .test_config scripts.
