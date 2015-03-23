@@ -12,12 +12,20 @@ part 'src/init_method.dart';
 part 'src/initializer.dart';
 
 /// Top level function which crawls the dependency graph and runs initializers.
-/// If `typeFilter` and/or `customFilter` are supplied then only those types of
+/// If [typeFilter] and/or [customFilter] are supplied then only those types of
 /// annotations will be parsed. If both filters are supplied they are treated
 /// as an AND.
-Future run({List<Type> typeFilter, InitializerFilter customFilter}) {
+///
+/// If [from] is supplied then initializers will be found starting from the
+/// library at the supplied uri.
+///
+/// **Warning**: Do not use [from] directly in your code unless you are building
+/// a framework that will use a transformer to remove this argument later. This
+/// parameter is supported in Dartium, but [run] will throw if you use the
+/// argument after building an application with `pub build` or `pub serve`.
+Future run({List<Type> typeFilter, InitializerFilter customFilter, Uri from}) {
   return _runInitQueue(loader.loadInitializers(
-      typeFilter: typeFilter, customFilter: customFilter));
+      typeFilter: typeFilter, customFilter: customFilter, from: from));
 }
 
 Future _runInitQueue(Queue<Function> initializers) {

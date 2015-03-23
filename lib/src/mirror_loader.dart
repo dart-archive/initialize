@@ -11,8 +11,8 @@ import 'package:initialize/initialize.dart';
 final _root = currentMirrorSystem().isolate.rootLibrary;
 
 Queue<Function> loadInitializers(
-    {List<Type> typeFilter, InitializerFilter customFilter}) {
-  return new InitializationCrawler(typeFilter, customFilter).run();
+    {List<Type> typeFilter, InitializerFilter customFilter, Uri from}) {
+  return new InitializationCrawler(typeFilter, customFilter, from: from).run();
 }
 
 // Crawls a library and all its dependencies for `Initializer` annotations using
@@ -30,7 +30,17 @@ class InitializationCrawler {
   // function will be processed.
   final InitializerFilter customFilter;
 
-  InitializationCrawler(this.typeFilter, this.customFilter);
+  /// The library to start crawling from.
+  final LibraryMirror _rootLibrary;
+
+  /// Note: The [from] argument is only supported in the mirror_loader.dart. It
+  /// is not supported statically.
+  InitializationCrawler(this.typeFilter, this.customFilter, {Uri from})
+      : _rootLibrary = from == null
+          ? _root
+          : currentMirrorSystem().libraries[from] {
+    if (_rootLibrary == null) throw 'Unable to find library at $from.';
+  }
 
   // The primary function in this class, invoke it to crawl and collect all the
   // annotations into a queue of init functions.
@@ -39,38 +49,7 @@ class InitializationCrawler {
     var queue = new Queue<Function>();
     var libraries = currentMirrorSystem().libraries;
 
-    var trampolineUri = Uri.parse('${_root.uri}\$trampoline');
-    if (libraries.containsKey(trampolineUri)) {
-      // In dartium, process all relative libraries in reverse order of when
-      // they were seen.
-      // TODO(jakemac): This is an approximation of what we actually want.
-      // https://github.com/dart-lang/initialize/issues/25
-      var relativeLibraryUris = new List.from(libraries.keys
-          .where((uri) => uri.scheme != 'package' && uri.scheme != 'dart'));
-
-      for (var import in relativeLibraryUris.reversed) {
-        // Always load the package: version of a library if available for
-        // canonicalization purposes.
-        var libToRun;
-        if (_isHttpStylePackageUrl(import)) {
-          var packageUri = _packageUriFor(import);
-          libToRun = libraries[packageUri];
-        }
-        if (libToRun == null) libToRun = libraries[import];
-
-        // Dartium creates an extra trampoline lib that loads the main dart script
-        // and breaks our ordering, we should skip it.
-        if (librariesSeen.contains(libToRun) ||
-            libToRun.uri.path.endsWith('\$trampoline')) {
-          continue;
-        }
-        _readLibraryDeclarations(libToRun, librariesSeen, queue);
-      }
-    } else {
-      // Not in dartium, just process from the root library.
-      _readLibraryDeclarations(_root, librariesSeen, queue);
-    }
-
+    _readLibraryDeclarations(_rootLibrary, librariesSeen, queue);
     return queue;
   }
 

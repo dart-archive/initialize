@@ -24,7 +24,10 @@ Queue<InitEntry> initializers = new Queue<InitEntry>();
 /// Returns initializer functions matching the supplied filters and removes them
 /// from `initializers` so they won't be ran again.
 Queue<Function> loadInitializers(
-    {List<Type> typeFilter, InitializerFilter customFilter}) {
+    {List<Type> typeFilter, InitializerFilter customFilter, Uri from}) {
+  if (from != null) {
+    throw 'The `from` option is not supported in deploy mode.';
+  }
   Queue<Function> result = new Queue<Function>();
 
   var matchesFilters = (initializer) {

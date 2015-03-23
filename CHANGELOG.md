@@ -1,3 +1,12 @@
+## 0.6.0
+
+* Added the `from` option to `run`. This should be a `Uri` pointing to a library
+in the mirror system, and throws if not in mirrors mode. This can be used to
+run initializers in a custom order at development time.
+* This package no longer tries to handle initializing scripts found in html
+imports. If you need this feature please use `initWebComponents` from the
+`web_components` package.
+
 ## 0.5.1+8
 * Make sure to crawl the entire supertype chain for annotations, and run them
 in reverse order.
