@@ -183,7 +183,9 @@ class InitializationCrawler {
         }
         if (uri.scheme == 'file' || uri.scheme.startsWith('http')) {
           filePath = path.url.relative(uri.path,
-              from: path.url.dirname(_root.uri.path));
+              from: _root.uri.path.endsWith('/')
+                  ? _root.uri.path
+                  : path.url.dirname(_root.uri.path));
         } else if (uri.scheme == 'package') {
           var segments = uri.pathSegments;
           package = segments[0];

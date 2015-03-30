@@ -1,3 +1,8 @@
+## 0.6.0+1
+
+* Fix for `LibraryIdentifier` paths when initializer starts from inline scripts
+inside of subfolders.
+
 ## 0.6.0
 
 * Added the `from` option to `run`. This should be a `Uri` pointing to a library
@@ -8,6 +13,7 @@ imports. If you need this feature please use `initWebComponents` from the
 `web_components` package.
 
 ## 0.5.1+8
+
 * Make sure to crawl the entire supertype chain for annotations, and run them
 in reverse order.
 
