@@ -3,9 +3,11 @@
 This package provides a common interface for initialization annotations on top
 level methods, classes, and libraries. The interface looks like this:
 
-    abstract class Initializer<T> {
-      dynamic initialize(T target);
-    }
+```dart
+abstract class Initializer<T> {
+  dynamic initialize(T target);
+}
+```
 
 The `initialize` method will be called once for each annotation. The type `T` is
 determined by what was annotated. For libraries it will be a `LibraryIdentifier`
@@ -24,12 +26,14 @@ There is one initializer which comes with this package, `@initMethod`. Annotate
 any top level function with this and it will be invoked automatically. For
 example, the program below will print `hello`:
 
-    import 'package:initialize/initialize.dart';
-    
-    @initMethod
-    printHello() => print('hello');
-    
-    main() => run();
+```dart
+import 'package:initialize/initialize.dart';
+
+@initMethod
+printHello() => print('hello');
+
+main() => run();
+```
 
 ### Running the initializers
 
@@ -38,13 +42,15 @@ In order to run all the initializers, you need to import
 typically be the first thing to happen in your main. That method returns a Future,
 so you should put the remainder of your program inside the chained then call.
 
-    import 'package:initialize/initialize.dart';
-    
-    main() {
-      run().then((_) {
-        print('hello world!');
-      });
-    }
+```dart
+import 'package:initialize/initialize.dart';
+
+main() {
+  run().then((_) {
+    print('hello world!');
+  });
+}
+```
 
 ## Transformer
 
@@ -71,12 +77,14 @@ Below is an example pubspec with the transformer:
 
 Lets look at a slightly simplified version of the `@initMethod` class:
 
-    class InitMethod implements Initializer<Function> {
-      const InitMethod();
-    
-      @override
-      initialize(Function method) => method();
-    }
+```dart
+class InitMethod implements Initializer<Function> {
+  const InitMethod();
+
+  @override
+  initialize(Function method) => method();
+}
+```
 
 You would now be able to add `@InitMethod()` in front of any function and it
 will be automatically invoked when the user calls `run()`.
@@ -85,7 +93,9 @@ For classes which are stateless, you can usually just have a single const
 instance, and that is how the actual InitMethod implementation works. Simply add
 something like the following:
 
-    const initMethod = const InitMethod();
+```dart
+const initMethod = const InitMethod();
+```
 
 Now when people use the annotation, it just looks like `@initMethod` without any
 parenthesis, and its a bit more efficient since there is a single instance. You
