@@ -229,24 +229,27 @@ class DefaultInitializerPlugin implements InitializerPlugin {
       buffer.write('}');
     } else if (expression is Identifier) {
       var element = expression.bestElement;
-      if (element == null || !element.isPublic) {
-        logger.error('Private constants are not supported in intializer '
-            'constructors, found $element.');
-      }
-      libraryPrefixes.putIfAbsent(
+      if (element == null) {
+        logger.error('Unable to get `bestElement` for expression: $expression');
+      } else if (!element.isPublic) {
+        // Inline the evaluated value of private identifiers.
+        buffer.write(_evaluateExpression(expression, pluginData));
+      } else {
+        libraryPrefixes.putIfAbsent(
           element.library, () => 'i${libraryPrefixes.length}');
 
-      buffer.write('${libraryPrefixes[element.library]}.');
-      if (element is ClassElement) {
-        buffer.write(element.name);
-      } else if (element is PropertyAccessorElement) {
-        var variable = element.variable;
-        if (variable is FieldElement) {
-          buffer.write('${variable.enclosingElement.name}.');
+        buffer.write('${libraryPrefixes[element.library]}.');
+        if (element is ClassElement) {
+          buffer.write(element.name);
+        } else if (element is PropertyAccessorElement) {
+          var variable = element.variable;
+          if (variable is FieldElement) {
+            buffer.write('${variable.enclosingElement.name}.');
+          }
+          buffer.write('${variable.name}');
+        } else {
+          logger.error('Unsupported argument to initializer constructor.');
         }
-        buffer.write('${variable.name}');
-      } else {
-        logger.error('Unsupported argument to initializer constructor.');
       }
     } else if (expression is PropertyAccess) {
       buffer.write(buildExpression(expression.target, pluginData));
@@ -256,24 +259,30 @@ class DefaultInitializerPlugin implements InitializerPlugin {
           'Instance creation expressions are not supported (yet). Instead, '
           'please assign it to a const variable and use that instead.');
     } else {
-      // Try to evaluate the constant and use that.
-      var result = pluginData.resolver.evaluateConstant(
-          pluginData.initializer.targetElement.library, expression);
-      if (!result.isValid) {
-        logger.error('Invalid expression in initializer, found $expression. '
-            'And got the following errors: ${result.errors}.');
-      }
-      var value = result.value.value;
-      if (value == null) {
-        logger.error('Unsupported expression in initializer, found '
-            '$expression. Please file a bug at '
-            'https://github.com/dart-lang/initialize/issues');
-      }
-
-      if (value is String) value = _stringValue(value);
-      buffer.write(value);
+      buffer.write(_evaluateExpression(expression, pluginData));
     }
     return buffer.toString();
+  }
+
+  _evaluateExpression(Expression expression, InitializerPluginData pluginData) {
+    var logger = pluginData.logger;
+    var result = pluginData.resolver.evaluateConstant(
+        pluginData.initializer.targetElement.library, expression);
+    if (!result.isValid) {
+      logger.error('Invalid expression in initializer, found $expression. '
+          'And got the following errors: ${result.errors}.');
+      return null;
+    }
+    var value = result.value.value;
+    if (value == null) {
+      logger.error('Unsupported expression in initializer, found '
+          '$expression. Please file a bug at '
+          'https://github.com/dart-lang/initialize/issues');
+      return null;
+    }
+
+    if (value is String) value = _stringValue(value);
+    return value;
   }
 
   // Returns an expression for a string value. Wraps it in single quotes and

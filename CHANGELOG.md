@@ -1,3 +1,8 @@
+## 0.6.0+2
+
+* Private identifiers will now be evaluated and inlined into the bootstrap file
+by the transformer, [29](https://github.com/dart-lang/initialize/issues/29).
+
 ## 0.6.0+1
 
 * Fix for `LibraryIdentifier` paths when initializer starts from inline scripts

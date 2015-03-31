@@ -116,6 +116,7 @@ void dartEntryPointTests() {
   testPhases('constructor arguments', phases, {
     'a|web/index.dart': '''
         @DynamicInit(foo)
+        @DynamicInit(_foo)
         @DynamicInit(Foo.foo)
         @DynamicInit(bar.Foo.bar)
         @DynamicInit(bar.Foo.foo)
@@ -139,6 +140,7 @@ void dartEntryPointTests() {
 
         const x = 'x';
         const y = 'y';
+        const _foo = '_foo';
 
         class MyConst {
           const MyConst;
@@ -172,6 +174,7 @@ void dartEntryPointTests() {
         main() {
           initializers.addAll([
             new InitEntry(const i1.DynamicInit(i2.foo), const LibraryIdentifier(#web_foo, null, 'index.dart')),
+            new InitEntry(const i1.DynamicInit('_foo'), const LibraryIdentifier(#web_foo, null, 'index.dart')),
             new InitEntry(const i1.DynamicInit(i2.Foo.foo), const LibraryIdentifier(#web_foo, null, 'index.dart')),
             new InitEntry(const i1.DynamicInit(i2.Foo.bar), const LibraryIdentifier(#web_foo, null, 'index.dart')),
             new InitEntry(const i1.DynamicInit(i2.Foo.foo), const LibraryIdentifier(#web_foo, null, 'index.dart')),
