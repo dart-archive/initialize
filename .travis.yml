@@ -2,6 +2,6 @@ language: dart
 
 dart:
   - dev
-#  - stable
+  - stable
 
 script: ./tool/all_tests.sh
