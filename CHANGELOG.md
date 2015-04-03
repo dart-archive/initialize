@@ -1,3 +1,9 @@
+## 0.6.0+3
+
+* Make sure to always use the canonical libraries and super declarations in
+development mode. This eliminates an uncommon issue where a single initializer
+could be ran more than once.
+
 ## 0.6.0+2
 
 * Private identifiers will now be evaluated and inlined into the bootstrap file

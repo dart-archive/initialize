@@ -160,9 +160,8 @@ class InitializationCrawler {
     var annotations =
         declaration.metadata.where((m) => _filterMetadata(declaration, m));
     for (var meta in annotations) {
-      if (!_annotationsFound.containsKey(declaration)) {
-        _annotationsFound[declaration] = new Set<InstanceMirror>();
-      }
+      _annotationsFound.putIfAbsent(
+          declaration, () => new Set<InstanceMirror>());
       _annotationsFound[declaration].add(meta);
 
       // Initialize super classes first, if they are in the same library,
