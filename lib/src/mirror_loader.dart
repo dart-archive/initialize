@@ -9,6 +9,7 @@ import 'package:path/path.dart' as path;
 import 'package:initialize/initialize.dart';
 
 final _root = currentMirrorSystem().isolate.rootLibrary;
+final _libs = currentMirrorSystem().libraries;
 
 Queue<Function> loadInitializers(
     {List<Type> typeFilter, InitializerFilter customFilter, Uri from}) {
@@ -38,7 +39,7 @@ class InitializationCrawler {
   InitializationCrawler(this.typeFilter, this.customFilter, {Uri from})
       : _rootLibrary = from == null
           ? _root
-          : currentMirrorSystem().libraries[from] {
+          : _libs[from] {
     if (_rootLibrary == null) throw 'Unable to find library at $from.';
   }
 
@@ -53,6 +54,23 @@ class InitializationCrawler {
     return queue;
   }
 
+  /// Returns the canonical [LibraryMirror] for a given [LibraryMirror]. This
+  /// is defined as the one loaded from a `package:` url if available, otherwise
+  /// it is just [lib].
+  LibraryMirror _canonicalLib(LibraryMirror lib) {
+    var uri = lib.uri;
+    if (_isHttpStylePackageUrl(uri)) {
+      var packageUri = _packageUriFor(uri);
+      if (_libs.containsKey(packageUri)) return _libs[packageUri];
+    }
+    return lib;
+  }
+
+  /// Returns the canonical [ClassMirror] for a given [ClassMirror]. This is
+  /// defined as the one that appears in the canonical owner [LibararyMirror].
+  ClassMirror _canonicalClassDeclaration(ClassMirror declaration) =>
+      _canonicalLib(declaration.owner).declarations[declaration.simpleName];
+
   /// Whether [uri] is an http URI that contains a 'packages' segment, and
   /// therefore could be converted into a 'package:' URI.
   bool _isHttpStylePackageUrl(Uri uri) {
@@ -64,9 +82,10 @@ class InitializationCrawler {
         (uriPath.contains('/packages/') || uriPath.startsWith('packages/'));
   }
 
-  Uri _packageUriFor(Uri httpUri) {
-    var packagePath = httpUri.path
-        .substring(httpUri.path.lastIndexOf('packages/') + 'packages/'.length);
+  /// Returns a `package:` version of [uri].
+  Uri _packageUriFor(Uri uri) {
+    var packagePath = uri.path
+        .substring(uri.path.lastIndexOf('packages/') + 'packages/'.length);
     return Uri.parse('package:$packagePath');
   }
 
@@ -74,14 +93,14 @@ class InitializationCrawler {
   // post-order.
   Queue<Function> _readLibraryDeclarations(LibraryMirror lib,
       Set<LibraryMirror> librariesSeen, Queue<Function> queue) {
+    lib = _canonicalLib(lib);
+    if (librariesSeen.contains(lib)) return queue;
     librariesSeen.add(lib);
 
     // First visit all our dependencies.
     for (var dependency in lib.libraryDependencies) {
       // Skip dart: imports, they never use this package.
       if (dependency.targetLibrary.uri.toString().startsWith('dart:')) continue;
-      if (librariesSeen.contains(dependency.targetLibrary)) continue;
-
       _readLibraryDeclarations(dependency.targetLibrary, librariesSeen, queue);
     }
 
@@ -135,12 +154,14 @@ class InitializationCrawler {
   String _declarationName(DeclarationMirror declaration) =>
       MirrorSystem.getName(declaration.qualifiedName);
 
-  // Reads annotations on declarations and adds them to `_initQueue` if they are
-  // initializers.
+  /// Reads annotations on a [DeclarationMirror] and adds them to [_initQueue]
+  /// if they are [Initializer]s.
   void _readAnnotations(DeclarationMirror declaration, Queue<Function> queue) {
     var annotations =
         declaration.metadata.where((m) => _filterMetadata(declaration, m));
     for (var meta in annotations) {
+      _annotationsFound.putIfAbsent(
+          declaration, () => new Set<InstanceMirror>());
       _annotationsFound[declaration].add(meta);
 
       // Initialize super classes first, if they are in the same library,
@@ -150,14 +171,26 @@ class InitializationCrawler {
         if (declaration.superclass.owner == declaration.owner) {
           _readAnnotations(declaration.superclass, queue);
         } else {
-          var superMetas = declaration.superclass.metadata
-              .where((m) => _filterMetadata(declaration.superclass, m))
+          // Make sure to check the canonical superclass declaration, the one
+          // we get here is not always that. Specifically, this occurs if all of
+          // the following conditions are met:
+          //
+          //   1. The current library is never loaded via a `package:` dart
+          //      import anywhere in the program.
+          //   2. The current library loads the superclass via a relative file
+          //      import.
+          //   3. The super class is imported via a `package:` import somewhere
+          //      else in the program.
+          var canonicalSuperDeclaration =
+              _canonicalClassDeclaration(declaration.superclass);
+          var superMetas = canonicalSuperDeclaration.metadata
+              .where((m) => _filterMetadata(canonicalSuperDeclaration, m))
               .toList();
           if (superMetas.isNotEmpty) {
             throw new UnsupportedError(
                 'We have detected a cycle in your import graph when running '
                 'initializers on ${declaration.qualifiedName}. This means the '
-                'super class ${declaration.superclass.qualifiedName} has a '
+                'super class ${canonicalSuperDeclaration.qualifiedName} has a '
                 'dependency on this library (possibly transitive).');
           }
         }
@@ -213,9 +246,7 @@ class InitializationCrawler {
       return false;
     }
     if (customFilter != null && !customFilter(meta.reflectee)) return false;
-    if (!_annotationsFound.containsKey(declaration)) {
-      _annotationsFound[declaration] = new Set<InstanceMirror>();
-    }
+    if (!_annotationsFound.containsKey(declaration)) return true;
     if (_annotationsFound[declaration].contains(meta)) return false;
     return true;
   }
