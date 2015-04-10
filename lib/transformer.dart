@@ -13,8 +13,8 @@ import 'package:code_transformers/resolver.dart';
 import 'package:code_transformers/src/dart_sdk.dart' as dart_sdk;
 import 'package:dart_style/dart_style.dart';
 import 'package:glob/glob.dart';
-import 'package:html5lib/dom.dart' as dom;
-import 'package:html5lib/parser.dart' show parse;
+import 'package:html/dom.dart' as dom;
+import 'package:html/parser.dart' show parse;
 import 'package:path/path.dart' as path;
 
 import 'build/initializer_plugin.dart';

@@ -1,3 +1,7 @@
+## 0.6.0+4
+
+* Switch `html5lib` package dependency to `html`.
+
 ## 0.6.0+3
 
 * Make sure to always use the canonical libraries and super declarations in
