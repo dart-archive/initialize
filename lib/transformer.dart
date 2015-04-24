@@ -311,7 +311,7 @@ class _BootstrapFileBuilder {
 $importsBuffer
 main() {
 $initializersBuffer
-  i0.main();
+  return i0.main();
 }
 ''');
   }

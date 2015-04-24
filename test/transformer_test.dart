@@ -104,7 +104,7 @@ void htmlEntryPointTests() {
             new InitEntry(i2.constInit, i5.Foo),
           ]);
 
-          i0.main();
+          return i0.main();
         }
         ''')
   }, []);
@@ -192,7 +192,7 @@ void dartEntryPointTests() {
             new InitEntry(const i1.NamedArgInit(1, name: 'Bill'), const LibraryIdentifier(#web_foo, null, 'index.dart')),
           ]);
 
-          i0.main();
+          return i0.main();
         }
         ''')
   }, []);
@@ -233,7 +233,7 @@ void dartEntryPointTests() {
             new InitEntry(i2.constInit, i1.Foo),
           ]);
 
-          i0.main();
+          return i0.main();
         }
         ''')
   }, []);
@@ -279,7 +279,7 @@ void dartEntryPointTests() {
             new InitEntry(i2.constInit, i1.Bar),
           ]);
 
-          i0.main();
+          return i0.main();
         }
         ''')
   }, []);
@@ -352,7 +352,7 @@ void dartEntryPointTests() {
             new InitEntry(i2.constInit, i0.Index),
           ]);
 
-          i0.main();
+          return i0.main();
         }
         ''')
   }, []);
@@ -414,7 +414,7 @@ void pluginTests() {
             new InitEntry(i2.initMethod, i0.index),
           ]);
 
-          i0.main();
+          return i0.main();
         }
         ''')
   }, []);

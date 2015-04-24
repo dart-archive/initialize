@@ -1,3 +1,7 @@
+## 0.6.0+5
+
+* Fix bootstrap files to return the result of the original main.
+
 ## 0.6.0+4
 
 * Switch `html5lib` package dependency to `html`.
