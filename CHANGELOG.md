@@ -1,3 +1,7 @@
+## 0.6.1
+
+* Update to analyzer `<=0.26.0`.
+
 ## 0.6.0+5
 
 * Fix bootstrap files to return the result of the original main.
