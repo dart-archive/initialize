@@ -1,3 +1,8 @@
+## 0.6.1+1
+
+* Update to work with deferred loaded libararies in reflective mode, (but not
+yet in the transformer).
+
 ## 0.6.1
 
 * Update to analyzer `<=0.26.0`.
