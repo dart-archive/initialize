@@ -100,7 +100,8 @@ class InitializationCrawler {
     // First visit all our dependencies.
     for (var dependency in lib.libraryDependencies) {
       // Skip dart: imports, they never use this package.
-      if (dependency.targetLibrary.uri.toString().startsWith('dart:')) continue;
+      var targetLibrary = dependency.targetLibrary;
+      if (targetLibrary == null || targetLibrary.uri.scheme == 'dart') continue;
       _readLibraryDeclarations(dependency.targetLibrary, librariesSeen, queue);
     }
 
