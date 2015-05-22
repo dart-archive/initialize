@@ -30,7 +30,6 @@ build/test/init_method_test: Skip
 
 # failing tests
 [ $compiler == none ]
-test/deferred_library_test: RuntimeError # Issue 22592
 build/test/deferred_library_test.initialize_test: RuntimeError # Issue 22592
 
 [ $browser ]
