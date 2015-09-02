@@ -1,3 +1,7 @@
+## 0.6.1+2
+
+* Update analyzer to `<0.27.0` and dart_style to `<0.3.0`.
+
 ## 0.6.1+1
 
 * Update to work with deferred loaded libararies in reflective mode, (but not
@@ -5,7 +9,7 @@ yet in the transformer).
 
 ## 0.6.1
 
-* Update to analyzer `<=0.26.0`.
+* Update to analyzer `<0.26.0`.
 
 ## 0.6.0+5
 

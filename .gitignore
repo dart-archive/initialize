@@ -3,6 +3,7 @@
 packages
 .pub
 pubspec.lock
+.packages
 
 # Files created by dart2js.
 *.dart.js
