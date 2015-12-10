@@ -4,15 +4,12 @@
 library initialize.init_method_test;
 
 import 'package:initialize/initialize.dart';
-import 'package:unittest/unittest.dart';
-import 'package:unittest/compact_vm_config.dart';
+import 'package:test/test.dart';
 
 int calledFoo = 0;
 int calledBar = 0;
 
 main() {
-  useCompactVMConfiguration();
-
   // Run all initializers.
   run().then((_) {
     test('initMethod annotation invokes functions once', () {

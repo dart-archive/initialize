@@ -4,6 +4,7 @@
 library initialize.build.initializer_plugin;
 
 import 'package:analyzer/src/generated/ast.dart';
+import 'package:analyzer/src/generated/constant.dart';
 import 'package:analyzer/src/generated/element.dart';
 import 'package:barback/barback.dart';
 import 'package:code_transformers/resolver.dart';
@@ -58,10 +59,8 @@ class DefaultInitializerPlugin implements InitializerPlugin {
   /// [ElementAnnotation] that was found.
   String buildMeta(InitializerPluginData pluginData) {
     var logger = pluginData.logger;
-    var element = pluginData.initializer.targetElement;
     var elementAnnotation = pluginData.initializer.annotationElement;
     var elementAnnotationElement = elementAnnotation.element;
-    var libraryPrefixes = pluginData.libraryPrefixes;
     if (elementAnnotationElement is ConstructorElement) {
       return buildConstructorMeta(elementAnnotation, pluginData);
     } else if (elementAnnotationElement is PropertyAccessorElement) {
@@ -264,7 +263,8 @@ class DefaultInitializerPlugin implements InitializerPlugin {
     return buffer.toString();
   }
 
-  _evaluateExpression(Expression expression, InitializerPluginData pluginData) {
+  _evaluateExpression(
+      Expression expression, InitializerPluginData pluginData) {
     var logger = pluginData.logger;
     var result = pluginData.resolver.evaluateConstant(
         pluginData.initializer.targetElement.library, expression);
@@ -273,15 +273,17 @@ class DefaultInitializerPlugin implements InitializerPlugin {
           'And got the following errors: ${result.errors}.');
       return null;
     }
-    var value = result.value.value;
+
+    var value = _getValue(result.value);
+
     if (value == null) {
       logger.error('Unsupported expression in initializer, found '
           '$expression. Please file a bug at '
           'https://github.com/dart-lang/initialize/issues');
-      return null;
     }
 
     if (value is String) value = _stringValue(value);
+
     return value;
   }
 
@@ -290,5 +292,32 @@ class DefaultInitializerPlugin implements InitializerPlugin {
   _stringValue(String value) {
     value = value.replaceAll(r'\', r'\\').replaceAll(r"'", r"\'");
     return "'$value'";
+  }
+
+  // Gets an actual value for a [DartObject].
+  _getValue(DartObject object) {
+    if (object == null) return null;
+    var value = object.toBoolValue() ??
+        object.toDoubleValue() ??
+        object.toIntValue() ??
+        object.toStringValue();
+    if (value == null) {
+      value = object.toListValue();
+      if (value != null) {
+        return value.map((DartObject element) => _getValue(element)).toList();
+      }
+      Map<DartObject, DartObject> map = object.toMapValue();
+      if (map != null) {
+        Map result = {};
+        map.forEach((DartObject key, DartObject value) {
+          dynamic mappedKey = _getValue(key);
+          if (mappedKey != null) {
+            result[mappedKey] = _getValue(value);
+          }
+        });
+        return result;
+      }
+    }
+    return value;
   }
 }

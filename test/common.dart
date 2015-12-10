@@ -5,7 +5,7 @@ library initialize.test.build.common;
 
 import 'package:barback/barback.dart';
 import 'package:code_transformers/src/test_harness.dart';
-import 'package:unittest/unittest.dart';
+import 'package:test/test.dart';
 
 testPhases(String testName, List<List<Transformer>> phases,
     Map<String, String> inputFiles, Map<String, String> expectedFiles,

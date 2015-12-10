@@ -7,14 +7,11 @@ import 'common.dart';
 import 'package:analyzer/src/generated/element.dart';
 import 'package:dart_style/dart_style.dart';
 import 'package:initialize/transformer.dart';
-import 'package:unittest/compact_vm_config.dart';
-import 'package:unittest/unittest.dart';
+import 'package:test/test.dart';
 
 var formatter = new DartFormatter();
 
 main() {
-  useCompactVMConfiguration();
-
   group('Html entry points', htmlEntryPointTests);
   group('Dart entry points', dartEntryPointTests);
   group('InitializerPlugins', pluginTests);

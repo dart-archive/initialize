@@ -5,13 +5,10 @@ library initialize.initializer_custom_filter_test;
 
 import 'dart:async';
 import 'package:initialize/initialize.dart';
-import 'package:unittest/unittest.dart';
-import 'package:unittest/compact_vm_config.dart';
+import 'package:test/test.dart';
 import 'package:initialize/src/initialize_tracker.dart';
 
 main() {
-  useCompactVMConfiguration();
-
   test('filter option limits which types of annotations will be ran', () {
     var originalSize;
     return runPhase(1).then((_) {

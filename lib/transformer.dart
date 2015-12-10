@@ -237,7 +237,7 @@ class _BootstrapFileBuilder {
     if (element.metadata.isEmpty) return found;
 
     var metaNodes;
-    var node = element.node;
+    var node = element.computeNode();
     if (node is SimpleIdentifier && node.parent is LibraryIdentifier) {
       metaNodes = node.parent.parent.metadata;
     } else if (node is ClassDeclaration || node is FunctionDeclaration) {

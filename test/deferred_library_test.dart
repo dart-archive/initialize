@@ -7,12 +7,9 @@ library initialize.deferred_library_test;
 import 'foo.dart' deferred as foo;
 import 'package:initialize/src/initialize_tracker.dart';
 import 'package:initialize/initialize.dart';
-import 'package:unittest/unittest.dart';
-import 'package:unittest/compact_vm_config.dart';
+import 'package:test/test.dart';
 
 main() {
-  useCompactVMConfiguration();
-
   test('annotations can be loaded lazily', () {
     // Initialize everything not in deferred imports.
     return run().then((_) {
