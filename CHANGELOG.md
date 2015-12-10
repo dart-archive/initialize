@@ -1,3 +1,7 @@
+## 0.6.2
+
+* Update analyzer to `>=0.27.0 <0.28.0`.
+
 ## 0.6.1+2
 
 * Update analyzer to `<0.27.0` and dart_style to `<0.3.0`.

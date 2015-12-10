@@ -5,12 +5,9 @@ library initialize.initializer_cycle_error_test;
 
 import 'cycle_a.dart'; // Causes a cycle.
 import 'package:initialize/initialize.dart';
-import 'package:unittest/unittest.dart';
-import 'package:unittest/compact_vm_config.dart';
+import 'package:test/test.dart';
 
 main() {
-  useCompactVMConfiguration();
-
   test('super class cycles are not supported', () {
     expect(run, throwsUnsupportedError);
   });

@@ -6,15 +6,12 @@ library initialize.initializer_parts_test;
 
 import 'package:initialize/src/initialize_tracker.dart';
 import 'package:initialize/initialize.dart';
-import 'package:unittest/unittest.dart';
-import 'package:unittest/compact_vm_config.dart';
+import 'package:test/test.dart';
 
 part 'parts/foo.dart';
 part 'parts/bar.dart';
 
 main() {
-  useCompactVMConfiguration();
-
   // Run all initializers.
   run().then((_) {
     test('parts', () {

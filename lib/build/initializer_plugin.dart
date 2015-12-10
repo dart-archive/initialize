@@ -264,7 +264,8 @@ class DefaultInitializerPlugin implements InitializerPlugin {
     return buffer.toString();
   }
 
-  _evaluateExpression(Expression expression, InitializerPluginData pluginData) {
+  _evaluateExpression(
+      Expression expression, InitializerPluginData pluginData) {
     var logger = pluginData.logger;
     var result = pluginData.resolver.evaluateConstant(
         pluginData.initializer.targetElement.library, expression);
@@ -273,15 +274,24 @@ class DefaultInitializerPlugin implements InitializerPlugin {
           'And got the following errors: ${result.errors}.');
       return null;
     }
-    var value = result.value.value;
+
+    var value = result.value.toStringValue();
+    if (value != null) value = _stringValue(value);
+
+    if (value == null) value = result.value.toBoolValue();
+    if (value == null) value = result.value.toIntValue();
+    if (value == null) value = result.value.toDoubleValue();
+    if (value == null) value = result.value.toListValue();
+    if (value == null) value = result.value.toMapValue();
+    if (value == null) value = result.value.toSymbolValue();
+    if (value == null) value = result.value.toTypeValue();
+
     if (value == null) {
       logger.error('Unsupported expression in initializer, found '
           '$expression. Please file a bug at '
           'https://github.com/dart-lang/initialize/issues');
-      return null;
     }
 
-    if (value is String) value = _stringValue(value);
     return value;
   }
 

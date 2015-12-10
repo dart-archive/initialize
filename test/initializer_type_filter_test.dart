@@ -4,16 +4,13 @@
 library initialize.initializer_type_filter_test;
 
 import 'package:initialize/initialize.dart';
-import 'package:unittest/unittest.dart';
-import 'package:unittest/compact_vm_config.dart';
+import 'package:test/test.dart';
 
 // Initializers will mess with this value, and it gets reset to 0 at the
 // start of every test.
 var total;
 
 main() {
-  useCompactVMConfiguration();
-
   setUp(() {
     total = 0;
   });
