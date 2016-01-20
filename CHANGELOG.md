@@ -1,3 +1,7 @@
+## 0.6.2+1
+
+* Add support for code_transformers `0.4.x`.
+
 ## 0.6.2
 
 * Update analyzer to `>=0.27.0 <0.28.0`.

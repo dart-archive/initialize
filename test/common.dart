@@ -4,7 +4,7 @@
 library initialize.test.build.common;
 
 import 'package:barback/barback.dart';
-import 'package:code_transformers/src/test_harness.dart';
+import 'package:transformer_test/src/test_harness.dart';
 import 'package:test/test.dart';
 
 testPhases(String testName, List<List<Transformer>> phases,
