@@ -8,8 +8,7 @@
 set -e
 
 # Run the un-transformed command-line tests.
-# TODO(jakemac): Add back once http://dartbug.com/22592 is fixed.
-# dart test/deferred_library_test.dart
+dart test/deferred_library_test.dart
 dart test/init_method_test.dart
 dart test/initializer_custom_filter_test.dart
 dart test/initializer_cycle_error_test.dart
