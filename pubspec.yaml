@@ -22,18 +22,16 @@ transformers:
 - initialize/build/loader_replacer:
     $include: lib/initialize.dart
 - initialize:
-    $include: '**/*_test.dart'
+    $include: '**/*_test.*'
     entry_points:
-      - test/deferred_library_test.dart
-      - test/initializer_test.dart
-      - test/initializer_from_test.dart
-      - test/initializer_parts_test.dart
-      - test/initializer_super_test.dart
-      - test/initializer_cycle_error_test.dart
-      - test/initializer_custom_filter_test.dart
-      - test/initializer_type_filter_test.dart
-      - test/init_method_test.dart
+      - test/deferred_library_test.html
+      - test/initializer_test.html
+      - test/initializer_from_test.html
+      - test/initializer_parts_test.html
+      - test/initializer_super_test.html
+      - test/initializer_cycle_error_test.html
+      - test/initializer_custom_filter_test.html
+      - test/initializer_type_filter_test.html
+      - test/init_method_test.html
 - test/pub_serve:
     $include: test/**_test{.*,}.dart
-- $dart2js:
-    $exclude: '**/*.dart'
