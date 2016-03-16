@@ -4,7 +4,8 @@
 library initialize.test.cycle_a;
 
 import 'package:initialize/src/initialize_tracker.dart';
-import 'cycle_b.dart';
+import 'cycle_b.dart' as cycle_b;
 
+/// Uses [cycle_b].
 @initializeTracker
 class CycleA {}

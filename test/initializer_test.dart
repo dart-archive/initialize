@@ -11,12 +11,13 @@ library initialize.initializer_test;
 import 'foo/bar.dart';
 import 'package:initialize/src/initialize_tracker.dart';
 import 'package:initialize/initialize.dart';
-import 'package:test_package/foo.dart';
+import 'package:test_package/foo.dart' as test_foo;
 import 'package:test/test.dart';
 
+/// Uses [test_foo].
 main() {
   // Run all initializers.
-  run().then((_) {
+  return run().then((_) {
     test('annotations are seen in post-order with superclasses first', () {
       var expectedNames = [
         const LibraryIdentifier(#initialize.test.foo, null, 'foo.dart'),

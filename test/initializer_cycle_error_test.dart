@@ -7,10 +7,11 @@
 @TestOn('!js')
 library initialize.initializer_cycle_error_test;
 
-import 'cycle_a.dart'; // Causes a cycle.
+import 'cycle_a.dart' as cycle_a; // Causes a cycle.
 import 'package:initialize/initialize.dart';
 import 'package:test/test.dart';
 
+/// Uses [cycle_a].
 main() {
   test('super class cycles are not supported', () {
     expect(run, throwsUnsupportedError);
