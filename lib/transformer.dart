@@ -128,8 +128,6 @@ class InitializeTransformer extends Transformer {
   // [entryPoint].
   void _replaceEntryWithBootstrap(Transform transform, dom.Document document,
       AssetId entryPoint, AssetId originalDartFile, AssetId newDartFile) {
-    var found = false;
-
     var scripts = _getScripts(document)
         .where((script) {
       var assetId = uriToAssetId(entryPoint, _getScriptAttribute(script),

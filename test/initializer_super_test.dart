@@ -13,7 +13,7 @@ import 'package:test/test.dart';
 
 main() {
   // Run all initializers.
-  run().then((_) {
+  return run().then((_) {
     test('annotations are seen in post-order with superclasses first', () {
       var expectedNames = [A, C, B, E, D,];
       expect(InitializeTracker.seen, expectedNames);

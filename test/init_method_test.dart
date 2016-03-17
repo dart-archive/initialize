@@ -15,7 +15,7 @@ int calledBar = 0;
 
 main() {
   // Run all initializers.
-  run().then((_) {
+  return run().then((_) {
     test('initMethod annotation invokes functions once', () {
       expect(calledFoo, 1);
       expect(calledBar, 1);

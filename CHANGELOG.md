@@ -1,3 +1,7 @@
+## 0.6.2+2
+
+* Update `transformer_test` dep to `0.2.x`.
+
 ## 0.6.2+1
 
 * Add support for code_transformers `0.4.x`.

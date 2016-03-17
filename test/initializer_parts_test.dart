@@ -17,7 +17,7 @@ part 'parts/bar.dart';
 
 main() {
   // Run all initializers.
-  run().then((_) {
+  return run().then((_) {
     test('parts', () {
       var expectedNames = [
         const LibraryIdentifier(#initialize.initializer_parts_test, null,
