@@ -7,6 +7,7 @@ import 'dart:async';
 import 'dart:collection' show Queue;
 import 'package:analyzer/src/generated/ast.dart';
 import 'package:analyzer/src/generated/element.dart';
+import 'package:analyzer/src/dart/element/element.dart';
 import 'package:barback/barback.dart';
 import 'package:code_transformers/assets.dart';
 import 'package:code_transformers/resolver.dart';
@@ -84,14 +85,14 @@ class InitializeTransformer extends Transformer {
     if (primaryId == null) primaryId = transform.primaryInput.id;
     var newEntryPointId = new AssetId(primaryId.package,
         '${path.url.withoutExtension(primaryId.path)}.initialize.dart');
-    return transform.hasInput(newEntryPointId).then((exists) {
+    return transform.hasInput(newEntryPointId).then((exists) async {
       if (exists) {
         transform.logger
             .error('New entry point file $newEntryPointId already exists.');
         return null;
       }
 
-      return _resolvers.get(transform, [primaryId]).then((resolver) {
+      return await _resolvers.get(transform, [primaryId]).then((resolver) {
         transform.addOutput(generateBootstrapFile(
             resolver, transform, primaryId, newEntryPointId,
             errorIfNotFound: _errorIfNotFound, plugins: plugins));
@@ -269,9 +270,9 @@ class _BootstrapFileBuilder {
     var metaNodes;
     var node = element.computeNode();
     if (node is SimpleIdentifier && node.parent is LibraryIdentifier) {
-      metaNodes = node.parent.parent.metadata;
+      metaNodes = (node.parent.parent as Element).metadata;
     } else if (node is ClassDeclaration || node is FunctionDeclaration) {
-      metaNodes = node.metadata;
+      metaNodes = (node as Element).metadata;
     } else {
       return found;
     }
@@ -281,7 +282,7 @@ class _BootstrapFileBuilder {
       var meta = metaNode.elementAnnotation;
       var e = meta.element;
       if (e is PropertyAccessorElement) {
-        return _isInitializer(e.variable.evaluationResult.value.type);
+        return _isInitializer((e.variable as VariableElementImpl).evaluationResult.value.type);
       } else if (e is ConstructorElement) {
         return _isInitializer(e.returnType);
       }
