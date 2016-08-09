@@ -85,7 +85,7 @@ class InitializeTransformer extends Transformer {
     if (primaryId == null) primaryId = transform.primaryInput.id;
     var newEntryPointId = new AssetId(primaryId.package,
         '${path.url.withoutExtension(primaryId.path)}.initialize.dart');
-    return transform.hasInput(newEntryPointId).then((exists) async {
+    return transform.hasInput(newEntryPointId).then((exists) async{
       if (exists) {
         transform.logger
             .error('New entry point file $newEntryPointId already exists.');
@@ -270,9 +270,9 @@ class _BootstrapFileBuilder {
     var metaNodes;
     var node = element.computeNode();
     if (node is SimpleIdentifier && node.parent is LibraryIdentifier) {
-      metaNodes = (node.parent.parent as Element).metadata;
+      metaNodes = (node.parent.parent as Directive).metadata;
     } else if (node is ClassDeclaration || node is FunctionDeclaration) {
-      metaNodes = (node as Element).metadata;
+      metaNodes = (node as NamedCompilationUnitMember).metadata;
     } else {
       return found;
     }
