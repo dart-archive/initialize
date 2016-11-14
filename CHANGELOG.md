@@ -1,3 +1,7 @@
+## 0.6.2+3
+
+* Update code_transformers, analyzer, and html version constraints.
+
 ## 0.6.2+2
 
 * Update `transformer_test` dep to `0.2.x`.
