@@ -1,3 +1,7 @@
+## 0.6.2+4
+
+* Stop using deprecated analyzer apis.
+
 ## 0.6.2+3
 
 * Update code_transformers, analyzer, and html version constraints.
