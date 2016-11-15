@@ -5,8 +5,9 @@ library initialize.transformer;
 
 import 'dart:async';
 import 'dart:collection' show Queue;
-import 'package:analyzer/src/generated/ast.dart';
-import 'package:analyzer/src/generated/element.dart';
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:barback/barback.dart';
 import 'package:code_transformers/assets.dart';
 import 'package:code_transformers/resolver.dart';
