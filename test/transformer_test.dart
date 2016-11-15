@@ -5,7 +5,7 @@
 library initialize.transformer_test;
 
 import 'common.dart';
-import 'package:analyzer/src/generated/element.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:dart_style/dart_style.dart';
 import 'package:initialize/transformer.dart';
 import 'package:test/test.dart';
