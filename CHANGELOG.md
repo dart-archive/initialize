@@ -1,3 +1,7 @@
+## 0.6.2+5
+
+* Update analyzer minimum version to `0.27.2`.
+
 ## 0.6.2+4
 
 * Stop using deprecated analyzer apis.
