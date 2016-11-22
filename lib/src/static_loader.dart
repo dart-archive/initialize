@@ -30,7 +30,7 @@ Queue<Function> loadInitializers(
   }
   Queue<Function> result = new Queue<Function>();
 
-  var matchesFilters = (initializer) {
+  bool matchesFilters(InitEntry initializer) {
     if (typeFilter != null &&
         !typeFilter.any((t) => initializer.meta.runtimeType == t)) {
       return false;

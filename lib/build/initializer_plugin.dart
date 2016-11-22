@@ -3,9 +3,9 @@
 // BSD-style license that can be found in the LICENSE file.
 library initialize.build.initializer_plugin;
 
-import 'package:analyzer/src/generated/ast.dart';
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/src/generated/constant.dart';
-import 'package:analyzer/src/generated/element.dart';
 import 'package:barback/barback.dart';
 import 'package:code_transformers/resolver.dart';
 import 'package:initialize/transformer.dart';

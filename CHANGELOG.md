@@ -1,3 +1,15 @@
+## 0.6.2+5
+
+* Update analyzer minimum version to `0.27.2`.
+
+## 0.6.2+4
+
+* Stop using deprecated analyzer apis.
+
+## 0.6.2+3
+
+* Update code_transformers, analyzer, and html version constraints.
+
 ## 0.6.2+2
 
 * Update `transformer_test` dep to `0.2.x`.
