@@ -481,8 +481,11 @@ List<String> _readFileList(BarbackSettings settings, String field) {
   var files = <String>[];
   bool error;
   if (value is List) {
-    files = value as List<String>;
+     // This check is actually needed only in non-strong mode runtimes
     error = value.any((e) => e is! String);
+    if (!error) {
+      files = value as List<String>;
+    }
   } else if (value is String) {
     files = [value];
     error = false;
