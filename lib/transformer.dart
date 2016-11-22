@@ -384,7 +384,7 @@ $initializersBuffer
   /// [lib]. This includes exported methods from other libraries too.
   List<FunctionElement> _topLevelMethodsOfLibrary(
       LibraryElement library, Set<LibraryElement> seen) {
-    List<FunctionElement> methods = [];
+    var methods = <FunctionElement>[];
 
     var orderedExports = new List.from(library.exports)
       ..sort((a, b) => a.uriOffset.compareTo(b.uriOffset));
@@ -405,7 +405,7 @@ $initializersBuffer
   /// includes exported classes from other libraries.
   List<ClassElement> _classesOfLibrary(
       LibraryElement library, Set<LibraryElement> seen) {
-    List<ClassElement> classes = [];
+    var classes = <ClassElement>[];
 
     var orderedExports = new List.from(library.exports)
       ..sort((a, b) => a.uriOffset.compareTo(b.uriOffset));
@@ -478,10 +478,10 @@ class InitializerData {
 List<String> _readFileList(BarbackSettings settings, String field) {
   var value = settings.configuration[field];
   if (value == null) return null;
-  List<String> files = [];
+  var files = <String>[];
   bool error;
-  if (value is List<String>) {
-    files = value;
+  if (value is List) {
+    files = value as List<String>;
     error = value.any((e) => e is! String);
   } else if (value is String) {
     files = [value];
