@@ -5,6 +5,7 @@ library initialize.transformer;
 
 import 'dart:async';
 import 'dart:collection' show Queue;
+import 'package:analyzer/src/dart/element/element.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
@@ -81,25 +82,23 @@ class InitializeTransformer extends Transformer {
 
   // Returns the AssetId of the newly created bootstrap file.
   Future<AssetId> _buildBootstrapFile(Transform transform,
-      {AssetId primaryId}) {
+      {AssetId primaryId}) async {
     if (primaryId == null) primaryId = transform.primaryInput.id;
     var newEntryPointId = new AssetId(primaryId.package,
         '${path.url.withoutExtension(primaryId.path)}.initialize.dart');
-    return transform.hasInput(newEntryPointId).then((exists) {
-      if (exists) {
-        transform.logger
-            .error('New entry point file $newEntryPointId already exists.');
-        return null;
-      }
 
-      return _resolvers.get(transform, [primaryId]).then((resolver) {
-        transform.addOutput(generateBootstrapFile(
-            resolver, transform, primaryId, newEntryPointId,
-            errorIfNotFound: _errorIfNotFound, plugins: plugins));
-        resolver.release();
-        return newEntryPointId;
-      });
-    });
+    if (await transform.hasInput(newEntryPointId)) {
+      transform.logger
+          .error('New entry point file $newEntryPointId already exists.');
+      return null;
+    }
+
+    var resolver = await _resolvers.get(transform, [primaryId]);
+    transform.addOutput(generateBootstrapFile(
+        resolver, transform, primaryId, newEntryPointId,
+        errorIfNotFound: _errorIfNotFound, plugins: plugins));
+    resolver.release();
+    return newEntryPointId;
   }
 
   // Finds the first (and only) dart script on an html page and returns the
@@ -129,8 +128,7 @@ class InitializeTransformer extends Transformer {
   // [entryPoint].
   void _replaceEntryWithBootstrap(Transform transform, dom.Document document,
       AssetId entryPoint, AssetId originalDartFile, AssetId newDartFile) {
-    var scripts = _getScripts(document)
-        .where((script) {
+    var scripts = _getScripts(document).where((script) {
       var assetId = uriToAssetId(entryPoint, _getScriptAttribute(script),
           transform.logger, script.sourceSpan);
       return assetId == originalDartFile;
@@ -258,6 +256,7 @@ class _BootstrapFileBuilder {
               '(possibly transitive).');
         }
       }
+
       readSuperClassAnnotations(clazz.supertype);
       _readAnnotations(clazz);
     }
@@ -265,14 +264,15 @@ class _BootstrapFileBuilder {
 
   bool _readAnnotations(Element element) {
     var found = false;
-    if (element.metadata.isEmpty) return found;
+    // analyzer 0.29 doesn't allow this optimization :
+    //if (element.metadata.isEmpty) return found;
 
     var metaNodes;
     var node = element.computeNode();
     if (node is SimpleIdentifier && node.parent is LibraryIdentifier) {
-      metaNodes = node.parent.parent.metadata;
+      metaNodes = (node.parent.parent as Directive).metadata;
     } else if (node is ClassDeclaration || node is FunctionDeclaration) {
-      metaNodes = node.metadata;
+      metaNodes = (node as NamedCompilationUnitMember).metadata;
     } else {
       return found;
     }
@@ -282,7 +282,8 @@ class _BootstrapFileBuilder {
       var meta = metaNode.elementAnnotation;
       var e = meta.element;
       if (e is PropertyAccessorElement) {
-        return _isInitializer(e.variable.evaluationResult.value.type);
+        return _isInitializer(
+            (e.variable as VariableElementImpl).evaluationResult.value.type);
       } else if (e is ConstructorElement) {
         return _isInitializer(e.returnType);
       }
@@ -383,7 +384,7 @@ $initializersBuffer
   /// [lib]. This includes exported methods from other libraries too.
   List<FunctionElement> _topLevelMethodsOfLibrary(
       LibraryElement library, Set<LibraryElement> seen) {
-    var methods = [];
+    var methods = <FunctionElement>[];
 
     var orderedExports = new List.from(library.exports)
       ..sort((a, b) => a.uriOffset.compareTo(b.uriOffset));
@@ -404,7 +405,7 @@ $initializersBuffer
   /// includes exported classes from other libraries.
   List<ClassElement> _classesOfLibrary(
       LibraryElement library, Set<LibraryElement> seen) {
-    var classes = [];
+    var classes = <ClassElement>[];
 
     var orderedExports = new List.from(library.exports)
       ..sort((a, b) => a.uriOffset.compareTo(b.uriOffset));
@@ -474,14 +475,17 @@ class InitializerData {
 }
 
 // Reads a file list from a barback settings configuration field.
-_readFileList(BarbackSettings settings, String field) {
+List<String> _readFileList(BarbackSettings settings, String field) {
   var value = settings.configuration[field];
   if (value == null) return null;
-  var files = [];
+  var files = <String>[];
   bool error;
   if (value is List) {
-    files = value;
+     // This check is actually needed only in non-strong mode runtimes
     error = value.any((e) => e is! String);
+    if (!error) {
+      files = value as List<String>;
+    }
   } else if (value is String) {
     files = [value];
     error = false;
