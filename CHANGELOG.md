@@ -1,3 +1,7 @@
+## 0.6.2+6
+
+* Small bug fixes for https://github.com/dart-lang/web-components/issues/54.
+
 ## 0.6.2+5
 
 * Update analyzer minimum version to `0.27.2`.
