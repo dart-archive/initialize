@@ -265,7 +265,8 @@ class _BootstrapFileBuilder {
 
   bool _readAnnotations(Element element) {
     var found = false;
-    if (element.metadata.isEmpty) return found;
+    // analyzer 0.29 doesn't allow this optimization :
+    //if (element.metadata.isEmpty) return found;
 
     var metaNodes;
     var node = element.computeNode();
