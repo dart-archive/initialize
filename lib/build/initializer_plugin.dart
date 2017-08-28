@@ -302,9 +302,9 @@ class DefaultInitializerPlugin implements InitializerPlugin {
         object.toIntValue() ??
         object.toStringValue();
     if (value == null) {
-      value = object.toListValue();
-      if (value != null) {
-        return value.map((DartObject element) => _getValue(element)).toList();
+      List list = object.toListValue();
+      if (list != null) {
+        return list.map((DartObject element) => _getValue(element)).toList();
       }
       Map<DartObject, DartObject> map = object.toMapValue();
       if (map != null) {

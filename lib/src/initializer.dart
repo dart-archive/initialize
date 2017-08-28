@@ -41,8 +41,9 @@ class LibraryIdentifier {
 
   const LibraryIdentifier(this.name, this.package, this.path);
 
-  bool operator ==(LibraryIdentifier other) =>
-      name == other.name && package == other.package && path == other.path;
+  bool operator ==(dynamic other) =>
+      other is LibraryIdentifier && name == other.name && package == other.package &&
+      path == other.path;
 
   String toString() => '$name: $package:$path';
 }

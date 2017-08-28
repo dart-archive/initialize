@@ -271,9 +271,9 @@ class _BootstrapFileBuilder {
     var metaNodes;
     var node = element.computeNode();
     if (node is SimpleIdentifier && node.parent is LibraryIdentifier) {
-      metaNodes = node.parent.parent.metadata;
+      metaNodes = (node.parent.parent as AnnotatedNode).metadata;
     } else if (node is ClassDeclaration || node is FunctionDeclaration) {
-      metaNodes = node.metadata;
+      metaNodes = (node as AnnotatedNode).metadata;
     } else {
       return found;
     }
@@ -283,7 +283,9 @@ class _BootstrapFileBuilder {
       var meta = metaNode.elementAnnotation;
       var e = meta.element;
       if (e is PropertyAccessorElement) {
-        return _isInitializer(e.variable.evaluationResult.value.type);
+        // 'as dynamic' is because evaluationResult is a property on an impl class, e.g. one that
+        // isn't supposed to be used externally.
+        return _isInitializer((e.variable as dynamic).evaluationResult.value.type);
       } else if (e is ConstructorElement) {
         return _isInitializer(e.returnType);
       }
