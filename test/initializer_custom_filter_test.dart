@@ -15,26 +15,34 @@ import 'package:initialize/src/initialize_tracker.dart';
 main() {
   test('filter option limits which types of annotations will be ran', () {
     var originalSize;
-    return runPhase(1).then((_) {
-      // Even though Baz extends Bar, only Baz should be run.
-      expect(InitializeTracker.seen, [Baz]);
-    }).then((_) => runPhase(2)).then((_) {
-      expect(InitializeTracker.seen, [Baz, foo]);
-    }).then((_) => runPhase(3)).then((_) {
-      expect(InitializeTracker.seen, [Baz, foo, Foo]);
-    }).then((_) => runPhase(4)).then((_) {
-      expect(InitializeTracker.seen, [Baz, foo, Foo, Bar]);
-    }).then((_) {
-      originalSize = InitializeTracker.seen.length;
-    })
+    return runPhase(1)
+        .then((_) {
+          // Even though Baz extends Bar, only Baz should be run.
+          expect(InitializeTracker.seen, [Baz]);
+        })
+        .then((_) => runPhase(2))
+        .then((_) {
+          expect(InitializeTracker.seen, [Baz, foo]);
+        })
+        .then((_) => runPhase(3))
+        .then((_) {
+          expect(InitializeTracker.seen, [Baz, foo, Foo]);
+        })
+        .then((_) => runPhase(4))
+        .then((_) {
+          expect(InitializeTracker.seen, [Baz, foo, Foo, Bar]);
+        })
+        .then((_) {
+          originalSize = InitializeTracker.seen.length;
+        })
         .then((_) => runPhase(1))
         .then((_) => runPhase(2))
         .then((_) => runPhase(3))
         .then((_) => runPhase(4))
         .then((_) => run())
         .then((_) {
-      expect(InitializeTracker.seen.length, originalSize);
-    });
+          expect(InitializeTracker.seen.length, originalSize);
+        });
   });
 }
 

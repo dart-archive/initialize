@@ -20,16 +20,23 @@ main() {
   });
 
   test('filter option limits which types of annotations will be ran', () {
-    return run(typeFilter: const [_Adder]).then((_) {
-      expect(total, 2);
-    }).then((_) => run(typeFilter: const [_Subtractor])).then((_) {
-      expect(total, 0);
-    }).then((_) => run(typeFilter: const [_Adder])).then((_) {
-      // Sanity check, future calls should be no-ops
-      expect(total, 0);
-    }).then((_) => run(typeFilter: const [_Subtractor])).then((_) {
-      expect(total, 0);
-    });
+    return run(typeFilter: const [_Adder])
+        .then((_) {
+          expect(total, 2);
+        })
+        .then((_) => run(typeFilter: const [_Subtractor]))
+        .then((_) {
+          expect(total, 0);
+        })
+        .then((_) => run(typeFilter: const [_Adder]))
+        .then((_) {
+          // Sanity check, future calls should be no-ops
+          expect(total, 0);
+        })
+        .then((_) => run(typeFilter: const [_Subtractor]))
+        .then((_) {
+          expect(total, 0);
+        });
   });
 }
 
@@ -48,6 +55,7 @@ class _Adder implements Initializer<dynamic> {
   @override
   initialize(_) => total++;
 }
+
 const adder = const _Adder();
 
 // Initializer that decrements `total` by one.
@@ -57,4 +65,5 @@ class _Subtractor implements Initializer<dynamic> {
   @override
   initialize(_) => total--;
 }
+
 const subtractor = const _Subtractor();
