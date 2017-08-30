@@ -8,8 +8,8 @@ import 'dart:mirrors';
 import 'package:path/path.dart' as path;
 import 'package:initialize/initialize.dart';
 
-final _root = currentMirrorSystem().isolate.rootLibrary;
-final _libs = currentMirrorSystem().libraries;
+final LibraryMirror _root = currentMirrorSystem().isolate.rootLibrary;
+final Map<Uri, LibraryMirror> _libs = currentMirrorSystem().libraries;
 
 Queue<Function> loadInitializers(
     {List<Type> typeFilter, InitializerFilter customFilter, Uri from}) {
