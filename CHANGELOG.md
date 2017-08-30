@@ -1,3 +1,7 @@
+## 0.6.2+7
+
+* Update analyzer maximum version to `0.31.0`.
+ 
 ## 0.6.2+6
 
 * Small bug fixes for https://github.com/dart-lang/web-components/issues/54.
