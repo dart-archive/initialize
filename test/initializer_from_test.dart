@@ -29,11 +29,12 @@ main() {
     expect(InitializeTracker.seen.length, 2);
     // Don't know what the path will be, so have to explicitly check fields
     // and use an [endsWith] matcher for the path.
-    expect(InitializeTracker.seen[1].name,
-        #initialize.test.initializer_from_test);
+    expect(
+        InitializeTracker.seen[1].name, #initialize.test.initializer_from_test);
     expect(InitializeTracker.seen[1].package, isNull);
     expect(
         InitializeTracker.seen[1].path, endsWith('initializer_from_test.dart'));
-  }, skip: 'Should be skipped only in pub-serve mode, blocked on  '
-      'https://github.com/dart-lang/test/issues/388.');
+  },
+      skip: 'Should be skipped only in pub-serve mode, blocked on  '
+          'https://github.com/dart-lang/test/issues/388.');
 }

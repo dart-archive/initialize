@@ -1,3 +1,7 @@
+## 0.6.2+7
+
+* Strong mode fixes.
+
 ## 0.6.2+6
 
 * Small bug fixes for https://github.com/dart-lang/web-components/issues/54.

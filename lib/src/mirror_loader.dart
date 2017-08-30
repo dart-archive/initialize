@@ -37,9 +37,7 @@ class InitializationCrawler {
   /// Note: The [from] argument is only supported in the mirror_loader.dart. It
   /// is not supported statically.
   InitializationCrawler(this.typeFilter, this.customFilter, {Uri from})
-      : _rootLibrary = from == null
-          ? _root
-          : _libs[from] {
+      : _rootLibrary = from == null ? _root : _libs[from] {
     if (_rootLibrary == null) throw 'Unable to find library at $from.';
   }
 
@@ -124,10 +122,14 @@ class InitializationCrawler {
   Iterable<DeclarationMirror> _sortedDeclarationsWithMetadata(
       LibraryMirror lib) {
     return new List()
-      ..addAll(_sortDeclarations(lib, lib.declarations.values
-          .where((d) => d is MethodMirror && d.metadata.isNotEmpty)))
-      ..addAll(_sortDeclarations(lib, lib.declarations.values
-          .where((d) => d is ClassMirror && d.metadata.isNotEmpty)));
+      ..addAll(_sortDeclarations(
+          lib,
+          lib.declarations.values
+              .where((d) => d is MethodMirror && d.metadata.isNotEmpty)))
+      ..addAll(_sortDeclarations(
+          lib,
+          lib.declarations.values
+              .where((d) => d is ClassMirror && d.metadata.isNotEmpty)));
   }
 
   List<DeclarationMirror> _sortDeclarations(
@@ -202,7 +204,8 @@ class InitializationCrawler {
           throw _TOP_LEVEL_FUNCTIONS_ONLY;
         }
         annotatedValue = (declaration.owner as ObjectMirror)
-            .getField(declaration.simpleName).reflectee;
+            .getField(declaration.simpleName)
+            .reflectee;
       } else if (declaration is LibraryMirror) {
         var package;
         var filePath;

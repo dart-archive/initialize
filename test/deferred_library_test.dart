@@ -24,6 +24,7 @@ main() {
         expect(InitializeTracker.seen.length, 5);
       });
     });
-  }, skip: 'Should be skipped only in pub-serve mode, blocked on  '
-      'https://github.com/dart-lang/test/issues/388.');
+  },
+      skip: 'Should be skipped only in pub-serve mode, blocked on  '
+          'https://github.com/dart-lang/test/issues/388.');
 }

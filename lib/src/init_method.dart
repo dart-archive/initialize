@@ -8,6 +8,7 @@ part of initialize;
 /// it shouldn't be used directly in annotations, instead use the `initMethod`
 /// singleton below.
 typedef dynamic _ZeroArg();
+
 class _InitMethod implements Initializer<_ZeroArg> {
   const _InitMethod();
 

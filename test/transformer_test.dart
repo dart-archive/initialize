@@ -19,14 +19,19 @@ main() {
 }
 
 void htmlEntryPointTests() {
-  var phases = [[new InitializeTransformer(['web/*.html'])]];
+  var phases = [
+    [
+      new InitializeTransformer(['web/*.html'])
+    ]
+  ];
 
   testPhases('basic', phases, {
     'a|web/index.html': '''
         <html><head></head><body>
           <script type="application/dart" src="index.dart"></script>
         </body></html>
-        '''.replaceAll('        ', ''),
+        '''
+        .replaceAll('        ', ''),
     'a|web/index.dart': '''
         library web_foo;
 
@@ -77,7 +82,8 @@ void htmlEntryPointTests() {
         <html><head></head><body>
           <script type="application/dart" src="index.initialize.dart"></script>
 
-        </body></html>'''.replaceAll('        ', ''),
+        </body></html>'''
+        .replaceAll('        ', ''),
     'a|web/index.initialize.dart': formatter.format('''
         import 'package:initialize/src/static_loader.dart';
         import 'package:initialize/initialize.dart';
@@ -109,7 +115,11 @@ void htmlEntryPointTests() {
 }
 
 void dartEntryPointTests() {
-  var phases = [[new InitializeTransformer(['web/index.dart'])]];
+  var phases = [
+    [
+      new InitializeTransformer(['web/index.dart'])
+    ]
+  ];
 
   testPhases('constructor arguments', phases, {
     'a|web/index.dart': '''

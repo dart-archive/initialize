@@ -15,7 +15,13 @@ main() {
   // Run all initializers.
   return run().then((_) {
     test('annotations are seen in post-order with superclasses first', () {
-      var expectedNames = [A, C, B, E, D,];
+      var expectedNames = [
+        A,
+        C,
+        B,
+        E,
+        D,
+      ];
       expect(InitializeTracker.seen, expectedNames);
     });
   });

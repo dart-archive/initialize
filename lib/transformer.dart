@@ -129,8 +129,7 @@ class InitializeTransformer extends Transformer {
   // [entryPoint].
   void _replaceEntryWithBootstrap(Transform transform, dom.Document document,
       AssetId entryPoint, AssetId originalDartFile, AssetId newDartFile) {
-    var scripts = _getScripts(document)
-        .where((script) {
+    var scripts = _getScripts(document).where((script) {
       var assetId = uriToAssetId(entryPoint, _getScriptAttribute(script),
           transform.logger, script.sourceSpan);
       return assetId == originalDartFile;
@@ -258,6 +257,7 @@ class _BootstrapFileBuilder {
               '(possibly transitive).');
         }
       }
+
       readSuperClassAnnotations(clazz.supertype);
       _readAnnotations(clazz);
     }
@@ -285,7 +285,8 @@ class _BootstrapFileBuilder {
       if (e is PropertyAccessorElement) {
         // 'as dynamic' is because evaluationResult is a property on an impl class, e.g. one that
         // isn't supposed to be used externally.
-        return _isInitializer((e.variable as dynamic).evaluationResult.value.type);
+        return _isInitializer(
+            (e.variable as dynamic).evaluationResult.value.type);
       } else if (e is ConstructorElement) {
         return _isInitializer(e.returnType);
       }
