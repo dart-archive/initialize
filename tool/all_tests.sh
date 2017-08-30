@@ -7,6 +7,8 @@
 # Fast fail the script on failures.
 set -e
 
+dartanalyzer --fatal-warnings lib/initialize.dart lib/transformer.dart
+
 # Run the un-transformed command-line tests.
 dart test/deferred_library_test.dart
 dart test/init_method_test.dart
